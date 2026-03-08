@@ -273,6 +273,10 @@ function RoundEditor({ rounds, onChange }) {
             <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Description (affichée à l'écran)</label>
             <Input value={draft.description||''} onChange={v=>setDraft({...draft,description:v})} placeholder="Description optionnelle"/>
           </div>
+          <div>
+            <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Musique d'introduction</label>
+            <FileUpload value={draft.introAudioUrl||''} onChange={v=>setDraft({...draft,introAudioUrl:v})} accept="audio/*" label="🎵 Audio"/>
+          </div>
           <div style={{ display:'flex', gap:'12px' }}>
             <div style={{ flex:1 }}>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Points par bonne réponse</label>

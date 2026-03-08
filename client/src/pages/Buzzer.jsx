@@ -27,11 +27,11 @@ export default function Buzzer() {
     return on('buzzer_hit', ({ team: winner }) => {
       if (winner === team) {
         triggerHaptic();
-        playBuzz(true);
+        playQuack(true);
         setFlash(true);
         setTimeout(() => setFlash(false), 1000);
       } else {
-        playBuzz(false);
+        playQuack(false);
       }
     });
   }, [team]);
@@ -40,25 +40,43 @@ export default function Buzzer() {
     if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
   };
 
-  const playBuzz = (win) => {
+  const playQuack = (win) => {
     try {
       if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
       const ctx = audioCtx.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
       if (win) {
-        osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
-        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        osc.start(); osc.stop(ctx.currentTime + 0.6);
+        // Double quack : COUAC COUAC
+        [0, 0.38].forEach(delay => {
+          const osc = ctx.createOscillator();
+          const filter = ctx.createBiquadFilter();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(480, ctx.currentTime + delay);
+          osc.frequency.linearRampToValueAtTime(860, ctx.currentTime + delay + 0.05);
+          osc.frequency.exponentialRampToValueAtTime(310, ctx.currentTime + delay + 0.22);
+          filter.type = 'bandpass';
+          filter.frequency.value = 1400;
+          filter.Q.value = 4;
+          gain.gain.setValueAtTime(0.65, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
+          osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.32);
+        });
       } else {
-        osc.frequency.setValueAtTime(220, ctx.currentTime);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-        osc.start(); osc.stop(ctx.currentTime + 0.3);
+        // Couac triste (ton descendant)
+        const osc = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.45);
+        filter.type = 'bandpass';
+        filter.frequency.value = 700; filter.Q.value = 3;
+        gain.gain.setValueAtTime(0.45, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.5);
       }
     } catch(e) {}
   };

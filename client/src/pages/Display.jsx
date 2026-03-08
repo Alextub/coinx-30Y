@@ -9,21 +9,85 @@ function fmtTime(s) {
   return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 }
 
+// ── AUDIO ENGINE ───────────────────────────────────────────────────────────────
+let _audioCtx = null;
+let _droneStarted = false;
+
+function getCtx() {
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function startAmbientDrone() {
+  if (_droneStarted) return;
+  _droneStarted = true;
+  try {
+    const ctx = getCtx();
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.035, ctx.currentTime + 4);
+    master.connect(ctx.destination);
+    // Accord mineur (A1, E2, A2) légèrement désaccordé pour l'effet de battement
+    [55, 55.35, 82.4, 82.8, 110].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.value = i < 2 ? 1 : 0.5;
+      osc.connect(g); g.connect(master);
+      osc.start();
+    });
+    // LFO trémolo très lent
+    const lfo = ctx.createOscillator();
+    const lfoG = ctx.createGain();
+    lfo.frequency.value = 0.25; lfoG.gain.value = 0.012;
+    lfo.connect(lfoG); lfoG.connect(master.gain);
+    lfo.start();
+  } catch {}
+}
+
+function playTick(warning = false) {
+  try {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = warning ? 1100 : 750;
+    const t = ctx.currentTime;
+    gain.gain.setValueAtTime(warning ? 0.22 : 0.09, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    osc.start(t); osc.stop(t + 0.07);
+  } catch {}
+}
+
 function playEndSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Three short beeps
-    [0, 0.35, 0.7].forEach(delay => {
+    const ctx = getCtx();
+    // Trois bips montants
+    [0, 0.22, 0.44].forEach((delay, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'square';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.3);
+      osc.frequency.value = 330 * Math.pow(1.5, i);
+      gain.gain.setValueAtTime(0.2 + i * 0.1, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.22);
+    });
+    // Alarme finale (3 impulsions sawtooth)
+    [0.75, 1.0, 1.25].forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.38, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.2);
     });
   } catch {}
 }
@@ -72,29 +136,93 @@ function LobbyScreen({ gs }) {
 
 function RoundIntroScreen({ gs }) {
   const round = gs.round;
+  const [step, setStep] = useState(0);
+  const audioRef = useRef(null);
   const typeLabels = { buzzer:'🔔 BUZZER', timer:'⏱ TIMER', blind_test:'🎵 BLIND TEST', face_puzzle:'👤 TÊTES MÉLANGÉES', wager:'🎲 PARIS', mime:'🎭 MIMES', creative:'🎨 CRÉATIVITÉ' };
+
+  useEffect(() => {
+    setStep(0);
+    const t1 = setTimeout(() => setStep(1), 150);
+    const t2 = setTimeout(() => setStep(2), 750);
+    const t3 = setTimeout(() => setStep(3), 1600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [gs.currentRoundIndex]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !round?.introAudioUrl) return;
+    audio.volume = 0.7;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); audio.currentTime = 0; };
+  }, [round?.introAudioUrl, gs.currentRoundIndex]);
+
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'24px', position:'relative', zIndex:1 }}>
-      <div style={{ fontFamily:'var(--font-title)', fontSize:'1.6rem', color:'var(--teal)', letterSpacing:'4px' }}>
-        MANCHE {gs.currentRoundIndex + 1}
-      </div>
-      <div className="anim-bounce-in" style={{
-        fontFamily:'var(--font-display)', fontSize:'clamp(3rem,8vw,7rem)',
-        color:'var(--yellow)', textShadow:'4px 4px 0 #E65100, 0 0 40px #FFD600',
-        textAlign:'center', letterSpacing:'4px',
-      }}>{round?.name || 'Nouvelle Manche'}</div>
-      <div style={{
-        fontFamily:'var(--font-title)', fontSize:'1.4rem',
-        color:'var(--blue-light)', letterSpacing:'3px',
-      }}>{typeLabels[round?.type] || ''}</div>
-      {round?.description && (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'28px', position:'relative', zIndex:1, overflow:'hidden' }}>
+      {round?.introAudioUrl && <audio ref={audioRef} src={round.introAudioUrl} loop/>}
+
+      {/* Rayons lumineux en arrière-plan */}
+      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none', overflow:'hidden' }}>
         <div style={{
-          maxWidth:'600px', textAlign:'center', color:'rgba(255,255,255,0.7)',
-          fontSize:'1.1rem', padding:'16px 24px',
-          background:'rgba(255,255,255,0.05)', borderRadius:'8px',
-          border:'1px solid rgba(255,255,255,0.1)',
-        }}>{round.description}</div>
+          width:'200vmax', height:'200vmax',
+          background:'conic-gradient(from 0deg, transparent 0deg, rgba(255,214,0,0.025) 10deg, transparent 20deg, transparent 30deg, rgba(255,214,0,0.02) 40deg, transparent 50deg)',
+          animation:'rays 40s linear infinite',
+          transformOrigin:'center',
+        }}/>
+      </div>
+      {/* Halo central */}
+      <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'60vw', height:'60vw', borderRadius:'50%', background:'radial-gradient(circle, rgba(255,214,0,0.07) 0%, transparent 70%)', pointerEvents:'none' }}/>
+
+      {/* Numéro de manche */}
+      {step >= 1 && (
+        <div className="anim-slide-down" style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--teal)', letterSpacing:'8px', textShadow:'var(--shadow-neon-blue)' }}>
+          ─── MANCHE {gs.currentRoundIndex + 1}{gs.rounds?.length ? ` / ${gs.rounds.length}` : ''} ───
+        </div>
       )}
+
+      {/* Nom de la manche — entrée dramatique */}
+      {step >= 2 && (
+        <div className="anim-zoom-in" style={{ position:'relative', textAlign:'center', padding:'0 20px' }}>
+          {/* Effet de shine */}
+          <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, overflow:'hidden', pointerEvents:'none' }}>
+            <div style={{ position:'absolute', top:'-20%', bottom:'-20%', width:'35%', background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)', animation:'shine 1.2s ease 0.1s both' }}/>
+          </div>
+          <div style={{
+            fontFamily:'var(--font-display)', fontSize:'clamp(4rem,12vw,10rem)',
+            color:'var(--yellow)', letterSpacing:'4px', lineHeight:1,
+            textShadow:'6px 6px 0 #E65100, 0 0 60px #FFD600, 0 0 120px #FF6D00',
+          }}>
+            {round?.name || 'Nouvelle Manche'}
+          </div>
+        </div>
+      )}
+
+      {/* Type de manche */}
+      {step >= 3 && (
+        <div className="anim-slide-up" style={{
+          fontFamily:'var(--font-title)', fontSize:'1.8rem', letterSpacing:'4px',
+          padding:'12px 36px',
+          background:'rgba(255,255,255,0.06)', border:'2px solid rgba(255,255,255,0.18)',
+          borderRadius:'8px',
+        }}>
+          {typeLabels[round?.type] || ''}
+        </div>
+      )}
+
+      {step >= 3 && round?.description && (
+        <div style={{
+          maxWidth:'640px', textAlign:'center', color:'rgba(255,255,255,0.65)',
+          fontSize:'1.15rem', padding:'16px 28px', lineHeight:1.5,
+          background:'rgba(255,255,255,0.04)', borderRadius:'8px',
+          animation:'slide-up 0.5s 0.2s ease both',
+        }}>
+          {round.description}
+        </div>
+      )}
+
+      {/* Montagnes déco */}
+      <div style={{ position:'absolute', bottom:'4%', left:0, right:0, display:'flex', justifyContent:'center', fontSize:'2.8rem', opacity:0.12, letterSpacing:'-6px', userSelect:'none', pointerEvents:'none' }}>
+        🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️
+      </div>
     </div>
   );
 }
@@ -183,6 +311,7 @@ function TimerRoundScreen({ gs }) {
     return on('timer_tick', ({ team, value }) => {
       if (team === 'team1') setT1(value);
       else setT2(value);
+      playTick(value <= 10);
     });
   }, []);
 
@@ -407,7 +536,7 @@ function MimeScreen({ gs }) {
   const { on } = useSocket();
 
   useEffect(() => { setRemaining(gs.mime?.remaining ?? 0); }, [gs.mime?.remaining, gs.mime?.running]);
-  useEffect(() => on('mime_tick', ({ value }) => setRemaining(value)), []);
+  useEffect(() => on('mime_tick', ({ value }) => { setRemaining(value); playTick(value <= 10); }), []);
   useEffect(() => on('mime_expired', () => { setRemaining(0); playEndSound(); }), []);
 
   const team = gs.mime?.team;
@@ -482,7 +611,7 @@ function CreativeScreen({ gs }) {
   const { on } = useSocket();
 
   useEffect(() => { setRemaining(gs.creative?.remaining ?? 0); }, [gs.creative?.remaining, gs.creative?.running]);
-  useEffect(() => on('creative_tick', ({ value }) => setRemaining(value)), []);
+  useEffect(() => on('creative_tick', ({ value }) => { setRemaining(value); playTick(value <= 10); }), []);
   useEffect(() => on('creative_expired', () => { setRemaining(0); playEndSound(); }), []);
 
   const warning = remaining <= 10 && remaining > 0 && gs.creative?.running;
@@ -753,6 +882,13 @@ function EndScreen({ gs }) {
 // ── MAIN DISPLAY ───────────────────────────────────────────────────────────────
 export default function Display() {
   const { gameState: gs, connected } = useSocket();
+
+  // Démarrer le drone ambiant au premier clic sur l'écran
+  useEffect(() => {
+    const start = () => startAmbientDrone();
+    document.addEventListener('click', start, { once: true });
+    return () => document.removeEventListener('click', start);
+  }, []);
 
   if (!gs) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--blue-light)' }}>
