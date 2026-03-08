@@ -1,0 +1,145 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sky: #0a1628;
+  --sky2: #0d2240;
+  --blue: #1565C0;
+  --blue-light: #42A5F5;
+  --red: #E53935;
+  --red-bright: #FF1744;
+  --yellow: #FFD600;
+  --yellow-bright: #FFEA00;
+  --green: #00C853;
+  --white: #F5F5F5;
+  --snow: #E8EEF7;
+  --purple: #7B1FA2;
+  --orange: #FF6D00;
+  --teal: #00BCD4;
+
+  --font-display: 'Bangers', cursive;
+  --font-title: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+
+  --shadow-retro: 4px 4px 0px rgba(0,0,0,0.8);
+  --shadow-neon-blue: 0 0 20px #42A5F5, 0 0 40px #1565C0;
+  --shadow-neon-red: 0 0 20px #FF1744, 0 0 40px #E53935;
+  --shadow-neon-yellow: 0 0 20px #FFD600, 0 0 40px #FF6D00;
+}
+
+html, body, #root {
+  width: 100%; height: 100%; min-height: 100vh;
+  font-family: var(--font-body);
+  background: var(--sky);
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+/* Snowflakes */
+.snow-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; overflow: hidden;
+}
+
+.snowflake {
+  position: absolute; top: -20px; color: rgba(200,220,255,0.7);
+  font-size: 1rem; animation: fall linear infinite;
+  user-select: none;
+}
+
+@keyframes fall {
+  to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* Mountain silhouette */
+.mountain-bg {
+  position: fixed; bottom: 0; left: 0; width: 100%; pointer-events: none; z-index: 0;
+}
+
+/* Retro border */
+.retro-card {
+  background: var(--sky2);
+  border: 3px solid var(--blue-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow-retro), var(--shadow-neon-blue);
+  position: relative;
+}
+
+.retro-card::before {
+  content: '';
+  position: absolute; inset: -6px;
+  border: 2px dashed rgba(66,165,245,0.3);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  padding: 10px 24px;
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+}
+.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+
+.btn-blue { background: var(--blue); color: var(--white); border-color: var(--blue-light); }
+.btn-blue:hover { background: var(--blue-light); }
+.btn-red { background: var(--red); color: var(--white); border-color: var(--red-bright); }
+.btn-red:hover { background: var(--red-bright); }
+.btn-yellow { background: var(--yellow); color: #1a1a1a; border-color: var(--orange); }
+.btn-yellow:hover { background: var(--yellow-bright); }
+.btn-green { background: var(--green); color: #1a1a1a; border-color: #00E676; }
+.btn-ghost { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.4); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+/* Score bar */
+.score-bar {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px currentColor; }
+  50% { box-shadow: 0 0 40px currentColor, 0 0 80px currentColor; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px) rotate(-2deg); }
+  40% { transform: translateX(8px) rotate(2deg); }
+  60% { transform: translateX(-6px) rotate(-1deg); }
+  80% { transform: translateX(6px) rotate(1deg); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(3deg); }
+  80% { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes ski-glide {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120vw); }
+}
+
+.anim-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+.anim-slide-up { animation: slide-up 0.5s ease both; }
+.anim-blink { animation: blink 1s ease infinite; }
