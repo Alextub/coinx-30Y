@@ -58,9 +58,10 @@ let gameState = {
     found: [false, false, false, false],
   },
   wager: {
-    bets: { team1: 0, team2: 0 },
-    phase: 'betting',   // 'betting' | 'question'
+    bet: 0,
+    phase: 'betting',   // 'betting' | 'question' | 'steal'
     theme: '',
+    assignedTeam: 'team1',
   },
   mime: {
     team: null,         // 'team1' | 'team2' | null
@@ -232,7 +233,7 @@ io.on('connection', (socket) => {
       gameState.question = q?.question || '';
       gameState.answer = q?.answer || '';
       gameState.answerVisible = false;
-      gameState.wager = { bets: { team1: 0, team2: 0 }, phase: 'betting', theme: q?.theme || '' };
+      gameState.wager = { bet: 0, phase: 'betting', theme: q?.theme || '', assignedTeam: q?.team || 'team1' };
     } else {
       gameState.screen = 'round_intro';
     }
@@ -266,7 +267,7 @@ io.on('connection', (socket) => {
       gameState.facePuzzle = { found: [false, false, false, false] };
       gameState.buzzer = { active: true, winner: null, locked: [] };
     } else if (round.type === 'wager') {
-      gameState.wager = { bets: { team1: 0, team2: 0 }, phase: 'betting', theme: q.theme || '' };
+      gameState.wager = { bet: 0, phase: 'betting', theme: q.theme || '', assignedTeam: q.team || 'team1' };
     }
     io.emit('game_state', gameState);
   });
@@ -310,15 +311,24 @@ io.on('connection', (socket) => {
   });
 
   // Wager
-  socket.on('admin_wager_start_question', ({ bets }) => {
-    gameState.wager.bets = bets;
+  socket.on('admin_wager_start_question', ({ bet }) => {
+    gameState.wager.bet = bet;
     gameState.wager.phase = 'question';
-    gameState.buzzer = { active: true, winner: null, locked: [] };
+    const other = gameState.wager.assignedTeam === 'team1' ? 'team2' : 'team1';
+    gameState.buzzer = { active: true, winner: null, locked: [other] };
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_wager_open_steal', () => {
+    gameState.wager.phase = 'steal';
+    const assigned = gameState.wager.assignedTeam;
+    gameState.buzzer = { active: true, winner: null, locked: [assigned] };
+    gameState.answerVisible = false;
     io.emit('game_state', gameState);
   });
 
   socket.on('admin_wager_award', ({ team }) => {
-    const pts = gameState.wager?.bets?.[team] || 0;
+    const pts = gameState.wager?.bet || 0;
     gameState.scores[team] = (gameState.scores[team] || 0) + pts;
     io.emit('game_state', gameState);
     io.emit('score_update', { team, score: gameState.scores[team] });

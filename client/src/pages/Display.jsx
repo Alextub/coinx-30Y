@@ -521,67 +521,86 @@ function CreativeScreen({ gs }) {
 }
 
 function WagerScreen({ gs }) {
-  const isBetting = gs.wager?.phase === 'betting';
-  const bets = gs.wager?.bets || { team1: 0, team2: 0 };
+  const { phase, bet, assignedTeam, theme } = gs.wager || {};
+  const otherTeam = assignedTeam === 'team1' ? 'team2' : 'team1';
+  const assignedColor = assignedTeam === 'team1' ? 'var(--red-bright)' : 'var(--blue-light)';
+  const otherColor = otherTeam === 'team1' ? 'var(--red-bright)' : 'var(--blue-light)';
+
+  const BuzzerBadge = ({ team, color }) => {
+    const hit = gs.buzzer?.winner === team;
+    const locked = gs.buzzer?.locked?.includes(team);
+    return (
+      <div style={{
+        padding:'10px 28px', fontFamily:'var(--font-title)', fontSize:'1.1rem',
+        background: hit ? `${color}33` : 'rgba(255,255,255,0.05)',
+        border:`3px solid ${hit ? color : 'rgba(255,255,255,0.2)'}`,
+        borderRadius:'8px', boxShadow: hit ? `0 0 30px ${color}88` : 'none',
+        color: locked ? 'rgba(255,255,255,0.3)' : 'white',
+        animation: hit ? 'pulse-glow 1s ease infinite' : 'none',
+      }}>
+        {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+        {hit && ' ✓ BUZZÉ !'}{locked && ' 🔒'}
+      </div>
+    );
+  };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'32px', position:'relative', zIndex:1, padding:'20px' }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'28px', position:'relative', zIndex:1, padding:'20px' }}>
       <div style={{ fontFamily:'var(--font-title)', color:'var(--teal)', letterSpacing:'4px', fontSize:'1rem' }}>
         {gs.round?.name}
       </div>
 
-      {isBetting ? (
+      {phase === 'betting' && (
         <>
-          <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--yellow)', letterSpacing:'4px' }}>
-            🎲 MISEZ VOS POINTS
+          <div style={{ fontFamily:'var(--font-title)', fontSize:'1.2rem', color: assignedColor, letterSpacing:'3px' }}>
+            {assignedTeam==='team1'?'🔴':'🔵'} {gs.teamNames?.[assignedTeam]} — MISEZ !
           </div>
           <div className="anim-bounce-in retro-card" style={{ padding:'40px 60px', textAlign:'center', maxWidth:'800px' }}>
             <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,5.5rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #E65100, 0 0 40px #FFD600', lineHeight:1.1 }}>
-              {gs.wager?.theme || '?'}
+              {theme || '?'}
             </div>
           </div>
-          <div style={{ fontFamily:'var(--font-body)', color:'rgba(255,255,255,0.45)', fontSize:'1rem', letterSpacing:'1px' }}>
-            Les équipes décident de leur mise...
+          <div style={{ fontFamily:'var(--font-body)', color:'rgba(255,255,255,0.45)', fontSize:'1rem' }}>
+            {gs.teamNames?.[otherTeam]} attend...
           </div>
         </>
-      ) : (
-        <>
-          {/* Stakes */}
-          <div style={{ display:'flex', gap:'32px' }}>
-            {[{team:'team1',color:'var(--red-bright)'},{team:'team2',color:'var(--blue-light)'}].map(({team,color}) => {
-              const hit = gs.buzzer?.winner === team;
-              const locked = gs.buzzer?.locked?.includes(team);
-              return (
-                <div key={team} style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:'4px',
-                  padding:'14px 32px',
-                  background: hit ? `${color}33` : 'rgba(255,255,255,0.05)',
-                  border:`3px solid ${hit ? color : 'rgba(255,255,255,0.2)'}`,
-                  borderRadius:'10px',
-                  boxShadow: hit ? `0 0 30px ${color}88` : 'none',
-                  color: locked ? 'rgba(255,255,255,0.3)' : 'white',
-                  animation: hit ? 'pulse-glow 1s ease infinite' : 'none',
-                }}>
-                  <div style={{ fontFamily:'var(--font-title)', fontSize:'1.1rem' }}>
-                    {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
-                    {hit && ' ✓ BUZZÉ !'}
-                    {locked && ' 🔒'}
-                  </div>
-                  <div style={{ fontFamily:'var(--font-display)', fontSize:'2.2rem', color, textShadow:`0 0 15px ${color}` }}>
-                    {bets[team]} pts
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      )}
 
-          {/* Question */}
+      {phase === 'question' && (
+        <>
+          <div style={{ display:'flex', alignItems:'center', gap:'20px' }}>
+            <BuzzerBadge team={assignedTeam} color={assignedColor}/>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:'2rem', color:'var(--yellow)', textShadow:'0 0 20px #FFD600' }}>
+              {bet} pts
+            </div>
+          </div>
           <div className="retro-card" style={{ padding:'32px 60px', maxWidth:'900px', textAlign:'center', fontSize:'clamp(1.4rem,3vw,2.4rem)', fontFamily:'var(--font-body)', fontWeight:800, lineHeight:1.4 }}>
             {gs.question}
           </div>
-
           {gs.answerVisible && (
-            <div className="anim-bounce-in" style={{ padding:'24px 48px', background:'rgba(0,200,83,0.15)', border:'3px solid var(--green)', borderRadius:'12px', boxShadow:'0 0 30px rgba(0,200,83,0.4)', fontSize:'clamp(1.4rem,3vw,2.2rem)', fontFamily:'var(--font-title)', color:'var(--green)', textAlign:'center' }}>
+            <div className="anim-bounce-in" style={{ padding:'20px 44px', background:'rgba(0,200,83,0.15)', border:'3px solid var(--green)', borderRadius:'12px', boxShadow:'0 0 30px rgba(0,200,83,0.4)', fontSize:'clamp(1.4rem,3vw,2.2rem)', fontFamily:'var(--font-title)', color:'var(--green)', textAlign:'center' }}>
+              ✅ {gs.answer}
+            </div>
+          )}
+        </>
+      )}
+
+      {phase === 'steal' && (
+        <>
+          <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--yellow)', letterSpacing:'4px', animation:'pulse-glow 1s ease infinite' }}>
+            🎯 TENTATIVE DE VOL
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:'20px' }}>
+            <BuzzerBadge team={otherTeam} color={otherColor}/>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:'2rem', color:'var(--yellow)', textShadow:'0 0 20px #FFD600' }}>
+              {bet} pts
+            </div>
+          </div>
+          <div className="retro-card" style={{ padding:'32px 60px', maxWidth:'900px', textAlign:'center', fontSize:'clamp(1.4rem,3vw,2.4rem)', fontFamily:'var(--font-body)', fontWeight:800, lineHeight:1.4 }}>
+            {gs.question}
+          </div>
+          {gs.answerVisible && (
+            <div className="anim-bounce-in" style={{ padding:'20px 44px', background:'rgba(0,200,83,0.15)', border:'3px solid var(--green)', borderRadius:'12px', boxShadow:'0 0 30px rgba(0,200,83,0.4)', fontSize:'clamp(1.4rem,3vw,2.2rem)', fontFamily:'var(--font-title)', color:'var(--green)', textAlign:'center' }}>
               ✅ {gs.answer}
             </div>
           )}

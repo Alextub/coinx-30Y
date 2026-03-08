@@ -103,7 +103,7 @@ function ImageUpload({ value, onChange }) {
 function QuestionEditor({ questions, onChange, type }) {
   const addQ = () => onChange([...questions,
     type === 'face_puzzle'  ? { question:'', imageUrl:'', names:['','','',''] }
-    : type === 'wager'      ? { theme:'', question:'', answer:'' }
+    : type === 'wager'      ? { theme:'', question:'', answer:'', team:'team1' }
     : type === 'blind_test' ? { audioUrl:'', question:'', answer:'' }
     :                         { question:'', answer:'', imageUrl:'' }
   ]);
@@ -133,6 +133,10 @@ function QuestionEditor({ questions, onChange, type }) {
           </div>
           {type === 'wager' ? (
             <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+              <select value={q.team||'team1'} onChange={e=>updateQ(i,'team',e.target.value)} style={{ background:'rgba(0,0,0,0.4)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'6px', color:'white', padding:'8px 12px', fontFamily:'var(--font-body)', fontSize:'0.95rem' }}>
+                <option value="team1">🔴 Équipe 1 répond</option>
+                <option value="team2">🔵 Équipe 2 répond</option>
+              </select>
               <Input value={q.theme||''} onChange={v=>updateQ(i,'theme',v)} placeholder="Thème affiché avant la question (ex: Géographie)"/>
               <Input value={q.question||''} onChange={v=>updateQ(i,'question',v)} placeholder="Question révélée après les paris"/>
               <Input value={q.answer||''} onChange={v=>updateQ(i,'answer',v)} placeholder="Réponse"/>
@@ -324,10 +328,10 @@ function ControlPanel({ gs, emit }) {
   const questions = round?.questions || [];
   const hasMoreQ = qIdx < questions.length - 1 || qIdx === -1;
 
-  // Local state for wager bets (entered before committing to server)
-  const [localBets, setLocalBets] = useState({ team1: 0, team2: 0 });
+  // Local state for wager bet (entered before committing to server)
+  const [localBet, setLocalBet] = useState(0);
   useEffect(() => {
-    if (gs.wager?.phase === 'betting') setLocalBets({ team1: 0, team2: 0 });
+    if (gs.wager?.phase === 'betting') setLocalBet(0);
   }, [gs.wager?.phase, qIdx]);
 
   return (
@@ -562,63 +566,100 @@ function ControlPanel({ gs, emit }) {
       )}
 
       {/* Wager */}
-      {round?.type === 'wager' && gs.wager && (
-        <Section title="Paris">
-          {gs.wager.phase === 'betting' ? (
-            <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-              {gs.wager.theme && (
-                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>
-                  Thème : <strong style={{ color:'var(--yellow)' }}>{gs.wager.theme}</strong>
+      {round?.type === 'wager' && gs.wager && (() => {
+        const { phase, bet, assignedTeam, theme } = gs.wager;
+        const otherTeam = assignedTeam === 'team1' ? 'team2' : 'team1';
+        const assignedName = gs.teamNames?.[assignedTeam];
+        const otherName = gs.teamNames?.[otherTeam];
+        const assignedColor = assignedTeam === 'team1' ? 'var(--red-bright)' : 'var(--blue-light)';
+        const otherColor = otherTeam === 'team1' ? 'var(--red-bright)' : 'var(--blue-light)';
+        const buzzerWinner = gs.buzzer?.winner;
+        return (
+          <Section title="Paris">
+            {phase === 'betting' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>
+                  {theme && <>Thème : <strong style={{ color:'var(--yellow)' }}>{theme}</strong> — </>}
+                  <span style={{ color: assignedColor }}>{assignedTeam==='team1'?'🔴':'🔵'} {assignedName}</span> parie
                 </div>
-              )}
-              {['team1','team2'].map(team => (
-                <div key={team} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                  <span style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color: team==='team1'?'var(--red-bright)':'var(--blue-light)', minWidth:'130px' }}>
-                    {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+                <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                  <span style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color: assignedColor }}>
+                    {assignedTeam==='team1'?'🔴':'🔵'} {assignedName}
                   </span>
                   <input
-                    type="number" min="0" value={localBets[team]}
-                    onChange={e => setLocalBets(prev => ({ ...prev, [team]: parseInt(e.target.value) || 0 }))}
+                    type="number" min="0" value={localBet}
+                    onChange={e => setLocalBet(parseInt(e.target.value) || 0)}
                     style={{ width:'90px', background:'rgba(0,0,0,0.5)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'6px', color:'white', padding:'8px 10px', fontFamily:'var(--font-body)', fontSize:'1.1rem', textAlign:'center', outline:'none' }}
                   />
                   <span style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.85rem' }}>pts</span>
                 </div>
-              ))}
-              <Btn onClick={() => emit('admin_wager_start_question', { bets: localBets })} color="#E65100">
-                🎯 Lancer la question
-              </Btn>
-            </div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                {['team1','team2'].map(team => (
-                  <div key={team} style={{ padding:'6px 14px', background: gs.buzzer?.winner===team?(team==='team1'?'rgba(229,57,53,0.3)':'rgba(21,101,192,0.3)'):'rgba(0,0,0,0.3)', border:`1px solid ${gs.buzzer?.winner===team?(team==='team1'?'var(--red-bright)':'var(--blue-light)'):'rgba(255,255,255,0.1)'}`, borderRadius:'6px', fontFamily:'var(--font-title)', fontSize:'0.9rem', color:'white' }}>
-                    {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]} — {gs.wager.bets[team]} pts en jeu {gs.buzzer?.winner===team?'✓ BUZZÉ':''}
-                  </div>
-                ))}
-              </div>
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                <Btn onClick={() => emit('admin_reset_buzzer')} color="#6a1b9a">🔄 Buzzer</Btn>
-                <Btn onClick={() => emit('admin_reveal_answer')} color="#00695c" disabled={gs.answerVisible}>✅ Révéler</Btn>
-              </div>
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                <Btn onClick={() => emit('admin_wager_award', { team:'team1' })} color="#c62828">
-                  🏆 +{gs.wager.bets.team1} pts → 🔴 {gs.teamNames?.team1}
-                </Btn>
-                <Btn onClick={() => emit('admin_wager_award', { team:'team2' })} color="#1565C0">
-                  🏆 +{gs.wager.bets.team2} pts → 🔵 {gs.teamNames?.team2}
+                <Btn onClick={() => emit('admin_wager_start_question', { bet: localBet })} color="#E65100">
+                  🎯 Lancer la question
                 </Btn>
               </div>
-              {gs.question && (
-                <div style={{ padding:'8px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.85rem', color:'rgba(255,255,255,0.7)' }}>
-                  Q : {gs.question}{gs.answerVisible && <span style={{ color:'var(--green)', marginLeft:'8px' }}>→ {gs.answer}</span>}
+            )}
+
+            {phase === 'question' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>
+                  <span style={{ color: assignedColor }}>{assignedTeam==='team1'?'🔴':'🔵'} {assignedName}</span> répond — mise : <strong style={{ color:'var(--yellow)' }}>{bet} pts</strong>
                 </div>
-              )}
-              <Btn onClick={() => emit('admin_next_question')} color="#1b5e20" disabled={!hasMoreQ}>▶ Question suivante</Btn>
-            </div>
-          )}
-        </Section>
-      )}
+                <div style={{ display:'flex', gap:'8px' }}>
+                  <div style={{ padding:'6px 14px', background: buzzerWinner===assignedTeam?`${assignedColor}33`:'rgba(0,0,0,0.3)', border:`1px solid ${buzzerWinner===assignedTeam?assignedColor:'rgba(255,255,255,0.1)'}`, borderRadius:'6px', fontFamily:'var(--font-title)', fontSize:'0.9rem', color:'white' }}>
+                    {assignedTeam==='team1'?'🔴':'🔵'} {assignedName} {buzzerWinner===assignedTeam?'✓ BUZZÉ':''}
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                  <Btn onClick={() => emit('admin_reset_buzzer')} color="#6a1b9a">🔄 Buzzer</Btn>
+                  <Btn onClick={() => emit('admin_reveal_answer')} color="#00695c" disabled={gs.answerVisible}>✅ Révéler</Btn>
+                </div>
+                {gs.question && (
+                  <div style={{ padding:'8px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.85rem', color:'rgba(255,255,255,0.7)' }}>
+                    Q : {gs.question}{gs.answerVisible && <span style={{ color:'var(--green)', marginLeft:'8px' }}>→ {gs.answer}</span>}
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                  <Btn onClick={() => emit('admin_wager_award', { team: assignedTeam })} color="#1b5e20">
+                    ✅ Bonne réponse → +{bet} pts à {assignedTeam==='team1'?'🔴':'🔵'} {assignedName}
+                  </Btn>
+                  <Btn onClick={() => emit('admin_wager_open_steal')} color="#E65100">
+                    ❌ Mauvaise réponse → Vol possible
+                  </Btn>
+                </div>
+                <Btn onClick={() => emit('admin_next_question')} color="#555" disabled={!hasMoreQ}>⏭ Question suivante</Btn>
+              </div>
+            )}
+
+            {phase === 'steal' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ fontSize:'0.85rem', padding:'8px 12px', background:'rgba(229,57,53,0.1)', border:'1px solid rgba(229,57,53,0.3)', borderRadius:'6px' }}>
+                  <span style={{ color: otherColor }}>{otherTeam==='team1'?'🔴':'🔵'} {otherName}</span> peut voler <strong style={{ color:'var(--yellow)' }}>{bet} pts</strong>
+                </div>
+                <div style={{ display:'flex', gap:'8px' }}>
+                  <div style={{ padding:'6px 14px', background: buzzerWinner===otherTeam?`${otherColor}33`:'rgba(0,0,0,0.3)', border:`1px solid ${buzzerWinner===otherTeam?otherColor:'rgba(255,255,255,0.1)'}`, borderRadius:'6px', fontFamily:'var(--font-title)', fontSize:'0.9rem', color:'white' }}>
+                    {otherTeam==='team1'?'🔴':'🔵'} {otherName} {buzzerWinner===otherTeam?'✓ BUZZÉ':''}
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                  <Btn onClick={() => emit('admin_reset_buzzer')} color="#6a1b9a">🔄 Buzzer</Btn>
+                  <Btn onClick={() => emit('admin_reveal_answer')} color="#00695c" disabled={gs.answerVisible}>✅ Révéler</Btn>
+                </div>
+                {gs.question && (
+                  <div style={{ padding:'8px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.85rem', color:'rgba(255,255,255,0.7)' }}>
+                    Q : {gs.question}{gs.answerVisible && <span style={{ color:'var(--green)', marginLeft:'8px' }}>→ {gs.answer}</span>}
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                  <Btn onClick={() => emit('admin_wager_award', { team: otherTeam })} color="#1b5e20">
+                    ✅ Vol réussi → +{bet} pts à {otherTeam==='team1'?'🔴':'🔵'} {otherName}
+                  </Btn>
+                  <Btn onClick={() => emit('admin_next_question')} color="#555" disabled={!hasMoreQ}>❌ Vol raté → Question suivante</Btn>
+                </div>
+              </div>
+            )}
+          </Section>
+        );
+      })()}
 
       {/* Score editing */}
       <Section title="Scores">
