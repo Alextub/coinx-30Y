@@ -355,10 +355,42 @@ function ControlPanel({ gs, emit }) {
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
           <Btn onClick={() => emit('admin_show_lobby')} color="#555">🏠 Lobby</Btn>
-          <Btn onClick={() => emit('admin_show_scores')} color="#E65100">🏆 Scores</Btn>
+          <Btn onClick={() => emit('admin_show_scores')} color="#E65100">🏆 Scores totaux</Btn>
+          <Btn onClick={() => emit('admin_show_round_recap')} color="#6a1b9a" disabled={!round}>📊 Bilan de manche</Btn>
           <Btn onClick={() => emit('admin_next_round')} color="#1565C0">⏭ Manche suivante</Btn>
         </div>
       </Section>
+
+      {/* Aperçu suivant */}
+      {(() => {
+        const nextRound = gs.rounds?.[gs.currentRoundIndex + 1];
+        const nextQ = gs.round?.questions?.[gs.currentQuestionIndex + 1];
+        if (!nextRound && !nextQ) return null;
+        return (
+          <Section title="Aperçu suivant">
+            {nextQ && (
+              <div style={{ marginBottom: nextRound ? '8px' : 0, padding:'8px 10px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.85rem', color:'rgba(255,255,255,0.55)', borderLeft:'3px solid rgba(0,200,83,0.5)' }}>
+                <span style={{ color:'var(--green)', fontFamily:'var(--font-title)', fontSize:'0.75rem', letterSpacing:'2px' }}>QUESTION SUIVANTE</span>
+                <div style={{ marginTop:'4px', color:'rgba(255,255,255,0.8)' }}>
+                  {nextQ.question || nextQ.theme || nextQ.audioUrl || '—'}
+                </div>
+                {nextQ.answer && <div style={{ color:'rgba(255,255,255,0.4)', marginTop:'2px' }}>→ {nextQ.answer}</div>}
+              </div>
+            )}
+            {nextRound && (
+              <div style={{ padding:'8px 10px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.85rem', color:'rgba(255,255,255,0.55)', borderLeft:'3px solid rgba(66,165,245,0.5)' }}>
+                <span style={{ color:'var(--blue-light)', fontFamily:'var(--font-title)', fontSize:'0.75rem', letterSpacing:'2px' }}>MANCHE SUIVANTE</span>
+                <div style={{ marginTop:'4px', color:'rgba(255,255,255,0.8)' }}>
+                  {nextRound.name} — {ROUND_TYPES.find(t=>t.value===nextRound.type)?.label}
+                </div>
+                {nextRound.questions?.length > 0 && (
+                  <div style={{ color:'rgba(255,255,255,0.4)', marginTop:'2px' }}>{nextRound.questions.length} question{nextRound.questions.length > 1 ? 's' : ''}</div>
+                )}
+              </div>
+            )}
+          </Section>
+        );
+      })()}
 
       {/* Question control */}
       {round && ['buzzer','face_puzzle'].includes(round.type) && (
@@ -662,12 +694,16 @@ function ControlPanel({ gs, emit }) {
       })()}
 
       {/* Score editing */}
-      <Section title="Scores">
+      <Section title="Scores de la manche">
         <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
           {['team1','team2'].map(team => (
             <div key={team} style={{ flex:1, minWidth:'140px' }}>
-              <div style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color:team==='team1'?'var(--red-bright)':'var(--blue-light)', marginBottom:'6px' }}>
-                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]} — {gs.scores?.[team]||0} pts
+              <div style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color:team==='team1'?'var(--red-bright)':'var(--blue-light)', marginBottom:'2px' }}>
+                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+              </div>
+              <div style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', marginBottom:'6px' }}>
+                Manche : <strong style={{ color:'var(--green)' }}>{gs.roundScores?.[team]||0} pts</strong>
+                {' · '}Total : {gs.scores?.[team]||0} pts
               </div>
               <div style={{ display:'flex', gap:'6px' }}>
                 {[1,2,3,-1].map(pts=>(

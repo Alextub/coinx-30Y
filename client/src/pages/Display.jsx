@@ -610,6 +610,85 @@ function WagerScreen({ gs }) {
   );
 }
 
+function RoundRecapScreen({ gs }) {
+  const prev = gs.prevScores || { team1: 0, team2: 0 };
+  const curr = gs.scores || { team1: 0, team2: 0 };
+  const gained = gs.roundScores || { team1: 0, team2: 0 };
+  const [displayed, setDisplayed] = useState({ team1: prev.team1, team2: prev.team2 });
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed({ team1: prev.team1, team2: prev.team2 });
+    setDone(false);
+    const delay = setTimeout(() => {
+      const duration = 1800;
+      const start = Date.now();
+      const tick = () => {
+        const elapsed = Date.now() - start;
+        const t = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        setDisplayed({
+          team1: Math.round(prev.team1 + (curr.team1 - prev.team1) * eased),
+          team2: Math.round(prev.team2 + (curr.team2 - prev.team2) * eased),
+        });
+        if (t < 1) requestAnimationFrame(tick);
+        else setDone(true);
+      };
+      requestAnimationFrame(tick);
+    }, 700);
+    return () => clearTimeout(delay);
+  }, [gs.currentRoundIndex]);
+
+  const leader = curr.team1 > curr.team2 ? 'team1' : curr.team2 > curr.team1 ? 'team2' : null;
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'32px', position:'relative', zIndex:1, padding:'20px' }}>
+      <div style={{ fontFamily:'var(--font-title)', color:'var(--teal)', letterSpacing:'4px', fontSize:'1rem' }}>
+        BILAN — {gs.round?.name}
+      </div>
+      <div style={{ display:'flex', gap:'48px', alignItems:'flex-end' }}>
+        {[{team:'team1',color:'var(--red-bright)',hex:'#FF1744'},{team:'team2',color:'var(--blue-light)',hex:'#42A5F5'}].map(({team,color,hex}) => {
+          const isLeader = done && leader === team;
+          const pts = gained[team] || 0;
+          return (
+            <div key={team} className={isLeader ? 'anim-bounce-in' : ''} style={{
+              display:'flex', flexDirection:'column', alignItems:'center', gap:'10px',
+              padding:'28px 44px',
+              background: isLeader ? `${color}22` : 'rgba(0,0,0,0.3)',
+              border:`4px solid ${isLeader ? color : 'rgba(255,255,255,0.2)'}`,
+              borderRadius:'16px',
+              boxShadow: isLeader ? `0 0 50px ${hex}88` : 'none',
+              transition:'all 0.5s ease',
+            }}>
+              <div style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.6)' }}>
+                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+              </div>
+              {pts > 0 && (
+                <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--green)', textShadow:'0 0 12px #00C853' }}>
+                  +{pts} pts cette manche
+                </div>
+              )}
+              <div style={{
+                fontFamily:'var(--font-display)', fontSize:'clamp(4rem,10vw,8rem)',
+                color, textShadow:`0 0 20px ${color}`, lineHeight:1,
+                transition:'all 0.1s',
+              }}>{displayed[team]}</div>
+              {isLeader && (
+                <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', letterSpacing:'3px', fontSize:'1rem', animation:'pulse-glow 1.5s ease infinite' }}>
+                  ⭐ EN TÊTE ⭐
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {done && !leader && (
+        <div style={{ fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--teal)' }}>🤝 ÉGALITÉ !</div>
+      )}
+    </div>
+  );
+}
+
 function ScoresScreen({ gs }) {
   const team1 = gs.scores?.team1 || 0;
   const team2 = gs.scores?.team2 || 0;
@@ -692,18 +771,19 @@ export default function Display() {
       case 'mime': return <MimeScreen gs={gs}/>;
       case 'creative': return <CreativeScreen gs={gs}/>;
       case 'blind_test': return <BlindTestScreen gs={gs}/>;
+      case 'round_recap': return <RoundRecapScreen gs={gs}/>;
       case 'scores': return <ScoresScreen gs={gs}/>;
       case 'end': return <EndScreen gs={gs}/>;
       default: return <LobbyScreen gs={gs}/>;
     }
   };
 
-  const showScoreBar = !['lobby','end','scores','round_intro'].includes(gs.screen);
+  const showScoreBar = !['lobby','end','scores','round_intro','round_recap'].includes(gs.screen);
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden' }}>
       <Snow count={35}/>
-      {showScoreBar && <ScoreBar scores={gs.scores} teamNames={gs.teamNames} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
+      {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
       </div>

@@ -38,6 +38,8 @@ let gameState = {
   currentRoundIndex: -1,
   currentQuestionIndex: -1,
   scores: { team1: 0, team2: 0 },
+  roundScores: { team1: 0, team2: 0 },
+  prevScores: { team1: 0, team2: 0 },
   teamNames: { team1: 'Équipe 1', team2: 'Équipe 2' },
   buzzer: {
     active: false,
@@ -199,6 +201,7 @@ io.on('connection', (socket) => {
     gameState.round = gameState.rounds[nextIdx];
     gameState.answerVisible = false;
     gameState.buzzer = { active: false, winner: null, locked: [] };
+    gameState.roundScores = { team1: 0, team2: 0 };
 
     if (gameState.round.type === 'timer') {
       gameState.screen = 'timer_round';
@@ -245,7 +248,6 @@ io.on('connection', (socket) => {
     if (!round) return;
     const nextIdx = gameState.currentQuestionIndex + 1;
     if (nextIdx >= round.questions.length) {
-      gameState.screen = 'scores';
       io.emit('game_state', gameState);
       return;
     }
@@ -279,9 +281,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin_add_score', ({ team, points }) => {
-    gameState.scores[team] = (gameState.scores[team] || 0) + points;
+    gameState.roundScores[team] = (gameState.roundScores[team] || 0) + points;
     io.emit('game_state', gameState);
-    io.emit('score_update', { team, score: gameState.scores[team] });
+  });
+
+  socket.on('admin_show_round_recap', () => {
+    gameState.prevScores = { ...gameState.scores };
+    gameState.scores.team1 = (gameState.scores.team1 || 0) + (gameState.roundScores.team1 || 0);
+    gameState.scores.team2 = (gameState.scores.team2 || 0) + (gameState.roundScores.team2 || 0);
+    gameState.screen = 'round_recap';
+    io.emit('game_state', gameState);
   });
 
   socket.on('admin_reset_buzzer', () => {
@@ -329,9 +338,8 @@ io.on('connection', (socket) => {
 
   socket.on('admin_wager_award', ({ team }) => {
     const pts = gameState.wager?.bet || 0;
-    gameState.scores[team] = (gameState.scores[team] || 0) + pts;
+    gameState.roundScores[team] = (gameState.roundScores[team] || 0) + pts;
     io.emit('game_state', gameState);
-    io.emit('score_update', { team, score: gameState.scores[team] });
   });
 
   // Blind test
@@ -372,7 +380,6 @@ io.on('connection', (socket) => {
     const nextIdx = gameState.currentQuestionIndex + 1;
     if (nextIdx >= (round.questions || []).length) {
       pauseTimer();
-      gameState.screen = 'scores';
       io.emit('game_state', gameState);
       return;
     }
