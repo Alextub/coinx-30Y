@@ -1,20 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 import Snow from '../components/Snow';
 
 export default function Buzzer() {
   const { gameState: gs, emit, on } = useSocket();
-  const [team, setTeam] = useState(null);
+  const [searchParams] = useSearchParams();
   const [state, setState] = useState('idle'); // idle | buzzed | locked | waiting
   const [flash, setFlash] = useState(false);
   const audioCtx = useRef(null);
 
-  // Get team from URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get('team');
-    if (t === 'team1' || t === 'team2') setTeam(t);
-  }, []);
+  const t = searchParams.get('team');
+  const team = (t === 'team1' || t === 'team2') ? t : null;
 
   // Sync state from game state
   useEffect(() => {
@@ -81,12 +78,12 @@ export default function Buzzer() {
           <div style={{ display:'flex', gap:'16px', flexDirection:'column' }}>
             {gs?.teamNames && (
               <>
-                <a href="?team=team1" style={{ textDecoration:'none' }}>
+                <a href="#/buzzer?team=team1" style={{ textDecoration:'none' }}>
                   <div style={{ padding:'20px 40px', background:'rgba(229,57,53,0.2)', border:'3px solid var(--red-bright)', borderRadius:'12px', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'white', boxShadow:'0 0 20px rgba(255,23,68,0.4)' }}>
                     🔴 {gs.teamNames.team1}
                   </div>
                 </a>
-                <a href="?team=team2" style={{ textDecoration:'none' }}>
+                <a href="#/buzzer?team=team2" style={{ textDecoration:'none' }}>
                   <div style={{ padding:'20px 40px', background:'rgba(21,101,192,0.2)', border:'3px solid var(--blue-light)', borderRadius:'12px', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'white', boxShadow:'0 0 20px rgba(66,165,245,0.4)' }}>
                     🔵 {gs.teamNames.team2}
                   </div>
