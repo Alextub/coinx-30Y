@@ -134,7 +134,7 @@ function LobbyScreen({ gs }) {
   );
 }
 
-function RoundIntroScreen({ gs }) {
+function RoundIntroScreen({ gs, audioUnlocked }) {
   const round = gs.round;
   const [step, setStep] = useState(0);
   const audioRef = useRef(null);
@@ -142,9 +142,9 @@ function RoundIntroScreen({ gs }) {
 
   useEffect(() => {
     setStep(0);
-    const t1 = setTimeout(() => setStep(1), 150);
-    const t2 = setTimeout(() => setStep(2), 750);
-    const t3 = setTimeout(() => setStep(3), 1600);
+    const t1 = setTimeout(() => setStep(1), 300);
+    const t2 = setTimeout(() => setStep(2), 1200);
+    const t3 = setTimeout(() => setStep(3), 2800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [gs.currentRoundIndex]);
 
@@ -152,9 +152,12 @@ function RoundIntroScreen({ gs }) {
     const audio = audioRef.current;
     if (!audio || !round?.introAudioUrl) return;
     audio.volume = 0.7;
-    audio.play().catch(() => {});
-    return () => { audio.pause(); audio.currentTime = 0; };
-  }, [round?.introAudioUrl, gs.currentRoundIndex]);
+    const tryPlay = () => audio.play().catch(() => {});
+    if (audioUnlocked) tryPlay();
+    // Arrêt automatique après 5 secondes
+    const stopTimer = setTimeout(() => { audio.pause(); audio.currentTime = 0; }, 5000);
+    return () => { clearTimeout(stopTimer); audio.pause(); audio.currentTime = 0; };
+  }, [round?.introAudioUrl, gs.currentRoundIndex, audioUnlocked]);
 
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'28px', position:'relative', zIndex:1, overflow:'hidden' }}>
@@ -323,10 +326,10 @@ function TimerRoundScreen({ gs }) {
         {gs.round?.name} — ⏱ MANCHE TIMER
       </div>
 
-      {/* Question */}
-      {gs.question && (
-        <div className="retro-card" style={{ padding:'24px 40px', maxWidth:'800px', textAlign:'center', fontSize:'clamp(1.2rem,2.5vw,2rem)', fontWeight:800 }}>
-          {gs.question}
+      {/* Points de la manche */}
+      {gs.round?.points && (
+        <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', fontSize:'1.2rem', letterSpacing:'3px', textShadow:'var(--shadow-neon-yellow)' }}>
+          🏆 {gs.round.points} point{gs.round.points > 1 ? 's' : ''} en jeu
         </div>
       )}
 
@@ -362,13 +365,6 @@ function TimerRoundScreen({ gs }) {
         })}
       </div>
 
-      {gs.answerVisible && (
-        <div className="anim-bounce-in" style={{
-          padding:'16px 36px', background:'rgba(0,200,83,0.15)',
-          border:'3px solid var(--green)', borderRadius:'12px',
-          fontSize:'clamp(1.2rem,2.5vw,1.8rem)', fontFamily:'var(--font-title)', color:'var(--green)',
-        }}>✅ {gs.answer}</div>
-      )}
     </div>
   );
 }
@@ -882,13 +878,12 @@ function EndScreen({ gs }) {
 // ── MAIN DISPLAY ───────────────────────────────────────────────────────────────
 export default function Display() {
   const { gameState: gs, connected } = useSocket();
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  // Démarrer le drone ambiant au premier clic sur l'écran
-  useEffect(() => {
-    const start = () => startAmbientDrone();
-    document.addEventListener('click', start, { once: true });
-    return () => document.removeEventListener('click', start);
-  }, []);
+  const unlockAudio = () => {
+    setAudioUnlocked(true);
+    startAmbientDrone();
+  };
 
   if (!gs) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--blue-light)' }}>
@@ -899,7 +894,7 @@ export default function Display() {
 
   const renderScreen = () => {
     switch(gs.screen) {
-      case 'round_intro': return <RoundIntroScreen gs={gs}/>;
+      case 'round_intro': return <RoundIntroScreen gs={gs} audioUnlocked={audioUnlocked}/>;
       case 'question': return <QuestionScreen gs={gs}/>;
       case 'timer_round': return <TimerRoundScreen gs={gs}/>;
       case 'face_puzzle': return <FacePuzzleScreen gs={gs}/>;
@@ -923,6 +918,19 @@ export default function Display() {
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
       </div>
+      {!audioUnlocked && (
+        <button onClick={unlockAudio} style={{
+          position:'fixed', bottom:'16px', left:'50%', transform:'translateX(-50%)',
+          zIndex:999, padding:'10px 24px',
+          background:'rgba(0,200,83,0.9)', border:'2px solid #00C853',
+          borderRadius:'24px', color:'white', fontFamily:'var(--font-title)',
+          fontSize:'1rem', cursor:'pointer', letterSpacing:'2px',
+          boxShadow:'0 0 20px rgba(0,200,83,0.5)',
+          animation:'blink 2s ease infinite',
+        }}>
+          🔊 ACTIVER LE SON
+        </button>
+      )}
       {!connected && (
         <div style={{ position:'fixed', bottom:'12px', right:'12px', background:'rgba(229,57,53,0.9)', padding:'8px 16px', borderRadius:'6px', fontFamily:'var(--font-title)', fontSize:'0.9rem', zIndex:999 }}>
           ⚠ Déconnecté

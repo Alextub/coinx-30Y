@@ -42,37 +42,22 @@ export default function Buzzer() {
 
   const playQuack = (win) => {
     try {
-      if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = audioCtx.current;
       if (win) {
-        // Double quack : COUAC COUAC
-        [0, 0.38].forEach(delay => {
-          const osc = ctx.createOscillator();
-          const filter = ctx.createBiquadFilter();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(480, ctx.currentTime + delay);
-          osc.frequency.linearRampToValueAtTime(860, ctx.currentTime + delay + 0.05);
-          osc.frequency.exponentialRampToValueAtTime(310, ctx.currentTime + delay + 0.22);
-          filter.type = 'bandpass';
-          filter.frequency.value = 1400;
-          filter.Q.value = 4;
-          gain.gain.setValueAtTime(0.65, ctx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
-          osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + delay);
-          osc.stop(ctx.currentTime + delay + 0.32);
-        });
+        // Son depuis fichier — à placer dans client/public/sounds/quack.mp3
+        const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
+        audio.volume = 0.9;
+        audio.play().catch(() => {});
       } else {
-        // Couac triste (ton descendant)
+        // Son de défaite synthétisé
+        if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtx.current;
         const osc = ctx.createOscillator();
         const filter = ctx.createBiquadFilter();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(280, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.45);
-        filter.type = 'bandpass';
-        filter.frequency.value = 700; filter.Q.value = 3;
+        filter.type = 'bandpass'; filter.frequency.value = 700; filter.Q.value = 3;
         gain.gain.setValueAtTime(0.45, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
         osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);

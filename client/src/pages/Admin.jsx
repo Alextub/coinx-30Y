@@ -295,7 +295,7 @@ function RoundEditor({ rounds, onChange }) {
               <SubRoundEditor subRounds={draft.subRounds||[]} onChange={sr=>setDraft({...draft,subRounds:sr})}/>
             </div>
           )}
-          {!['mime','creative'].includes(draft.type) && (
+          {!['mime','creative','timer'].includes(draft.type) && (
             <div>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'8px' }}>Questions</label>
               <QuestionEditor questions={draft.questions||[]} onChange={q=>setDraft({...draft,questions:q})} type={draft.type}/>
@@ -363,6 +363,11 @@ function ControlPanel({ gs, emit }) {
           <Btn onClick={() => emit('admin_show_round_recap')} color="#6a1b9a" disabled={!round}>📊 Bilan de manche</Btn>
           <Btn onClick={() => emit('admin_next_round')} color="#1565C0">⏭ Manche suivante</Btn>
         </div>
+        {gs.screen === 'round_intro' && (
+          <div style={{ marginTop:'10px' }}>
+            <Btn onClick={() => emit('admin_start_round')} color="#00695c" full>▶ Démarrer la manche</Btn>
+          </div>
+        )}
       </Section>
 
       {/* Aperçu suivant */}
@@ -432,21 +437,15 @@ function ControlPanel({ gs, emit }) {
       {/* Timer control */}
       {round?.type === 'timer' && (
         <Section title="Timer">
-          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'10px' }}>
+          <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginBottom:'10px' }}>
+            Points de la manche : <strong style={{ color:'var(--yellow)' }}>{round.points || 1}</strong>
+          </div>
+          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
             <Btn onClick={() => emit('admin_timer_start', { team:'team1' })} color="#c62828">▶ 🔴 {gs.teamNames?.team1}</Btn>
             <Btn onClick={() => emit('admin_timer_start', { team:'team2' })} color="#1565C0">▶ 🔵 {gs.teamNames?.team2}</Btn>
             <Btn onClick={() => emit('admin_timer_pause')} color="#555">⏸ Pause</Btn>
             <Btn onClick={() => emit('admin_timer_switch')} color="#4a148c">⇄ Changer</Btn>
           </div>
-          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'10px' }}>
-            <Btn onClick={() => emit('admin_next_question')} color="#1b5e20" disabled={!hasMoreQ}>▶ Question suivante</Btn>
-            <Btn onClick={() => emit('admin_reveal_answer')} color="#00695c" disabled={gs.answerVisible}>✅ Révéler réponse</Btn>
-          </div>
-          {gs.question && (
-            <div style={{ padding:'10px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.9rem', color:'rgba(255,255,255,0.7)' }}>
-              Q : {gs.question} {gs.answerVisible && <span style={{ color:'var(--green)' }}>→ {gs.answer}</span>}
-            </div>
-          )}
         </Section>
       )}
 

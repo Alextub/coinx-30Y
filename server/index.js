@@ -204,41 +204,55 @@ io.on('connection', (socket) => {
     gameState.roundScores = { team1: 0, team2: 0 };
 
     if (gameState.round.type === 'timer') {
-      gameState.screen = 'timer_round';
       const duration = gameState.round.timerDuration || 60;
       gameState.timer = { team1: duration, team2: duration, active: null, running: false };
       pauseTimer();
     } else if (gameState.round.type === 'blind_test') {
-      gameState.screen = 'blind_test';
       gameState.currentQuestionIndex = 0;
       gameState.blindTest = { playing: false, revealed: false };
       gameState.question = gameState.round.questions[0]?.question || '';
       gameState.answer = gameState.round.questions[0]?.answer || '';
     } else if (gameState.round.type === 'face_puzzle') {
-      gameState.screen = 'face_puzzle';
       gameState.facePuzzle = { found: [false, false, false, false] };
       gameState.currentQuestionIndex = 0;
       gameState.question = gameState.round.questions[0]?.question || '';
       gameState.buzzer = { active: true, winner: null, locked: [] };
     } else if (gameState.round.type === 'mime') {
-      gameState.screen = 'mime';
       pauseMime();
       const firstSub = gameState.round.subRounds?.[0];
       gameState.mime = { team: null, running: false, remaining: firstSub?.timerDuration || 60, subRoundIndex: -1 };
     } else if (gameState.round.type === 'creative') {
-      gameState.screen = 'creative';
       pauseCreative();
       gameState.creative = { running: false, remaining: gameState.round.timerDuration || 300 };
     } else if (gameState.round.type === 'wager') {
       const q = gameState.round.questions[0];
-      gameState.screen = 'wager';
       gameState.currentQuestionIndex = 0;
       gameState.question = q?.question || '';
       gameState.answer = q?.answer || '';
       gameState.answerVisible = false;
       gameState.wager = { bet: 0, phase: 'betting', theme: q?.theme || '', assignedTeam: q?.team || 'team1' };
-    } else {
-      gameState.screen = 'round_intro';
+    }
+    // Toutes les manches passent par round_intro
+    gameState.screen = 'round_intro';
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_start_round', () => {
+    const round = gameState.round;
+    if (!round) return;
+    const screenMap = {
+      timer: 'timer_round', blind_test: 'blind_test', face_puzzle: 'face_puzzle',
+      mime: 'mime', creative: 'creative', wager: 'wager', buzzer: 'question',
+    };
+    gameState.screen = screenMap[round.type] || 'question';
+    // Pour buzzer : afficher la première question
+    if (round.type === 'buzzer' && round.questions?.length > 0) {
+      gameState.currentQuestionIndex = 0;
+      const q = round.questions[0];
+      gameState.question = q.question;
+      gameState.answer = q.answer;
+      gameState.answerVisible = false;
+      gameState.buzzer = { active: true, winner: null, locked: [] };
     }
     io.emit('game_state', gameState);
   });
