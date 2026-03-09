@@ -111,21 +111,29 @@ function LobbyScreen({ gs }) {
           textShadow:'var(--shadow-neon-blue)',
         }}>❄ ÉDITION MONTAGNE ❄</div>
       </div>
-      <div style={{
-        display:'flex', gap:'40px', fontFamily:'var(--font-title)', fontSize:'1.4rem',
-      }}>
-        {[gs?.teamNames?.team1||'Équipe 1', gs?.teamNames?.team2||'Équipe 2'].map((name, i) => (
-          <div key={i} style={{
-            padding:'16px 32px',
-            background: i===0 ? 'rgba(229,57,53,0.2)' : 'rgba(21,101,192,0.2)',
-            border:`3px solid ${i===0?'var(--red-bright)':'var(--blue-light)'}`,
-            borderRadius:'12px',
-            boxShadow:`0 0 20px ${i===0?'#FF1744':'#42A5F5'}66`,
-            color:'white',
-          }}>
-            {i===0?'🔴':'🔵'} {name}
-          </div>
-        ))}
+      <div style={{ display:'flex', gap:'40px', fontFamily:'var(--font-title)', fontSize:'1.4rem' }}>
+        {(['team1','team2']).map((team, i) => {
+          const name = gs?.teamNames?.[team] || (i===0?'Équipe 1':'Équipe 2');
+          const color = gs?.teamColors?.[team] || (i===0?'#FF1744':'#42A5F5');
+          const photo = gs?.teamPhotos?.[team];
+          return (
+            <div key={team} style={{
+              display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
+              padding:'20px 32px',
+              background:`${color}22`,
+              border:`3px solid ${color}`,
+              borderRadius:'12px',
+              boxShadow:`0 0 20px ${color}66`,
+              color:'white',
+            }}>
+              {photo
+                ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}`, boxShadow:`0 0 15px ${color}88` }}/>
+                : <span style={{ fontSize:'2.5rem' }}>{i===0?'🔴':'🔵'}</span>
+              }
+              {name}
+            </div>
+          );
+        })}
       </div>
       <div style={{ fontFamily:'var(--font-body)', color:'rgba(255,255,255,0.4)', fontSize:'1rem', animation:'blink 2s ease infinite' }}>
         En attente du démarrage...
@@ -772,7 +780,9 @@ function RoundRecapScreen({ gs }) {
         BILAN — {gs.round?.name}
       </div>
       <div style={{ display:'flex', gap:'48px', alignItems:'flex-end' }}>
-        {[{team:'team1',color:'var(--red-bright)',hex:'#FF1744'},{team:'team2',color:'var(--blue-light)',hex:'#42A5F5'}].map(({team,color,hex}) => {
+        {[{team:'team1',defaultColor:'var(--red-bright)',defaultHex:'#FF1744'},{team:'team2',defaultColor:'var(--blue-light)',defaultHex:'#42A5F5'}].map(({team,defaultColor,defaultHex}) => {
+          const color = gs.teamColors?.[team] || defaultColor;
+          const photo = gs.teamPhotos?.[team];
           const isLeader = done && leader === team;
           const pts = gained[team] || 0;
           return (
@@ -782,11 +792,12 @@ function RoundRecapScreen({ gs }) {
               background: isLeader ? `${color}22` : 'rgba(0,0,0,0.3)',
               border:`4px solid ${isLeader ? color : 'rgba(255,255,255,0.2)'}`,
               borderRadius:'16px',
-              boxShadow: isLeader ? `0 0 50px ${hex}88` : 'none',
+              boxShadow: isLeader ? `0 0 50px ${color}88` : 'none',
               transition:'all 0.5s ease',
             }}>
+              {photo && <img src={photo} alt="" style={{ width:'56px', height:'56px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}` }}/>}
               <div style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.6)' }}>
-                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+                {!photo && (team==='team1'?'🔴':'🔵')} {gs.teamNames?.[team]}
               </div>
               {pts > 0 && (
                 <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--green)', textShadow:'0 0 12px #00C853' }}>
@@ -795,8 +806,7 @@ function RoundRecapScreen({ gs }) {
               )}
               <div style={{
                 fontFamily:'var(--font-display)', fontSize:'clamp(4rem,10vw,8rem)',
-                color, textShadow:`0 0 20px ${color}`, lineHeight:1,
-                transition:'all 0.1s',
+                color, textShadow:`0 0 20px ${color}`, lineHeight:1, transition:'all 0.1s',
               }}>{displayed[team]}</div>
               {isLeader && (
                 <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', letterSpacing:'3px', fontSize:'1rem', animation:'pulse-glow 1.5s ease infinite' }}>
@@ -825,21 +835,28 @@ function ScoresScreen({ gs }) {
         🏆 SCORES
       </div>
       <div style={{ display:'flex', gap:'60px', alignItems:'flex-end' }}>
-        {[{team:'team1',score:team1,color:'var(--red-bright)',emoji:'🔴'},{team:'team2',score:team2,color:'var(--blue-light)',emoji:'🔵'}].map(({team,score,color,emoji})=>(
-          <div key={team} className="anim-bounce-in" style={{
-            display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
-            padding:'32px 48px',
-            background: winner===team ? `${color}22` : 'rgba(0,0,0,0.3)',
-            border:`4px solid ${winner===team?color:'rgba(255,255,255,0.2)'}`,
-            borderRadius:'16px',
-            boxShadow: winner===team ? `0 0 50px ${color}88` : 'none',
-          }}>
-            <div style={{ fontSize:'3rem' }}>{winner===team?'🥇':emoji}</div>
-            <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'rgba(255,255,255,0.7)' }}>{gs.teamNames?.[team]}</div>
-            <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(4rem,10vw,8rem)', color, textShadow:`0 0 20px ${color}`, lineHeight:1 }}>{score}</div>
-            {winner===team && <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', letterSpacing:'3px', fontSize:'1rem' }}>⭐ EN TÊTE ⭐</div>}
-          </div>
-        ))}
+        {[{team:'team1',score:team1,defaultColor:'var(--red-bright)',defaultHex:'#FF1744',emoji:'🔴'},{team:'team2',score:team2,defaultColor:'var(--blue-light)',defaultHex:'#42A5F5',emoji:'🔵'}].map(({team,score,defaultColor,defaultHex,emoji})=>{
+          const color = gs.teamColors?.[team] || defaultColor;
+          const photo = gs.teamPhotos?.[team];
+          return (
+            <div key={team} className="anim-bounce-in" style={{
+              display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
+              padding:'32px 48px',
+              background: winner===team ? `${color}22` : 'rgba(0,0,0,0.3)',
+              border:`4px solid ${winner===team?color:'rgba(255,255,255,0.2)'}`,
+              borderRadius:'16px',
+              boxShadow: winner===team ? `0 0 50px ${color}88` : 'none',
+            }}>
+              {photo
+                ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}`, boxShadow:`0 0 15px ${color}88` }}/>
+                : <div style={{ fontSize:'3rem' }}>{winner===team?'🥇':emoji}</div>
+              }
+              <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'rgba(255,255,255,0.7)' }}>{gs.teamNames?.[team]}</div>
+              <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(4rem,10vw,8rem)', color, textShadow:`0 0 20px ${color}`, lineHeight:1 }}>{score}</div>
+              {winner===team && <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', letterSpacing:'3px', fontSize:'1rem' }}>⭐ EN TÊTE ⭐</div>}
+            </div>
+          );
+        })}
       </div>
       {!winner && <div style={{ fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--teal)' }}>🤝 ÉGALITÉ !</div>}
     </div>
@@ -914,7 +931,7 @@ export default function Display() {
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden' }}>
       <Snow count={35}/>
-      {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
+      {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} teamColors={gs.teamColors} teamPhotos={gs.teamPhotos} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
       </div>

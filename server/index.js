@@ -41,6 +41,8 @@ let gameState = {
   roundScores: { team1: 0, team2: 0 },
   prevScores: { team1: 0, team2: 0 },
   teamNames: { team1: 'Équipe 1', team2: 'Équipe 2' },
+  teamColors: { team1: '#FF1744', team2: '#42A5F5' },
+  teamPhotos: { team1: null, team2: null },
   buzzer: {
     active: false,
     winner: null,       // 'team1' | 'team2' | null
@@ -179,6 +181,14 @@ io.on('connection', (socket) => {
 
   socket.on('admin_set_team_names', ({ team1, team2 }) => {
     gameState.teamNames = { team1, team2 };
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('team_set_profile', ({ team, name, color, photoUrl }) => {
+    if (team !== 'team1' && team !== 'team2') return;
+    if (name) gameState.teamNames[team] = name;
+    if (color) gameState.teamColors[team] = color;
+    if (photoUrl !== undefined) gameState.teamPhotos[team] = photoUrl;
     io.emit('game_state', gameState);
   });
 
