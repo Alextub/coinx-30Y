@@ -980,14 +980,16 @@ export default function Display() {
     setAudioUnlocked(true);
   };
 
-  // Quack on buzzer hit
+  // Quack on buzzer hit — delayed so buzzer phones always sound first
   useEffect(() => {
     return on('buzzer_hit', () => {
-      try {
-        const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
-        audio.volume = 0.85;
-        audio.play().catch(() => {});
-      } catch(e) {}
+      setTimeout(() => {
+        try {
+          const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
+          audio.volume = 0.85;
+          audio.play().catch(() => {});
+        } catch(e) {}
+      }, 250);
     });
   }, []);
 
