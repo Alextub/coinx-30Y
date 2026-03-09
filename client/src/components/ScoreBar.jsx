@@ -6,8 +6,8 @@ export default function ScoreBar({ scores, teamNames, teamColors, teamPhotos, hi
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       gap: '16px', padding: '10px 24px',
-      background: 'rgba(0,0,0,0.5)',
-      borderBottom: '2px solid rgba(66,165,245,0.3)',
+      background: 'linear-gradient(180deg, #3A2010, #2A1810)',
+      borderBottom: '2px solid rgba(255,215,0,0.4)',
       fontFamily: 'var(--font-title)',
     }}>
       <TeamScore
@@ -18,7 +18,7 @@ export default function ScoreBar({ scores, teamNames, teamColors, teamPhotos, hi
         highlight={highlight === 'team1'}
         emoji="🔴"
       />
-      <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.3)' }}>VS</div>
+      <div style={{ fontSize: '1.8rem', color: 'rgba(255,215,0,0.6)', fontFamily: 'var(--font-display)', textShadow: '0 0 10px #FFD700' }}>VS</div>
       <TeamScore
         name={teamNames?.team2 || 'Équipe 2'}
         score={scores?.team2 || 0}
@@ -36,8 +36,10 @@ function TeamScore({ name, score, color, photo, highlight, emoji }) {
     <div style={{
       display: 'flex', alignItems: 'center', gap: '10px',
       padding: '6px 18px',
-      background: highlight ? `${color}22` : 'transparent',
-      border: `2px solid ${highlight ? color : 'transparent'}`,
+      background: highlight
+        ? `${color}22`
+        : 'repeating-linear-gradient(92deg, #3A2010 0px, #452415 4px, #3A2010 8px, #4a2b18 14px, #3A2010 20px)',
+      border: `2px solid ${highlight ? color : 'rgba(255,215,0,0.2)'}`,
       borderRadius: '8px',
       boxShadow: highlight ? `0 0 20px ${color}66` : 'none',
       transition: 'all 0.3s ease',

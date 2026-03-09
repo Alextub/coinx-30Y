@@ -9,6 +9,7 @@ const ROUND_TYPES = [
   { value:'wager', label:'🎲 Paris', desc:'Pariez vos points' },
   { value:'mime', label:'🎭 Mimes', desc:'Chrono par équipe' },
   { value:'creative', label:'🎨 Créativité', desc:'Atelier avec chrono' },
+  { value:'video', label:'🎬 Vidéo', desc:'Vidéo puis questions' },
 ];
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ function QuestionEditor({ questions, onChange, type }) {
     type === 'face_puzzle'  ? { question:'', imageUrl:'', names:['','','',''] }
     : type === 'wager'      ? { theme:'', question:'', answer:'', team:'team1' }
     : type === 'blind_test' ? { audioUrl:'', question:'', answer:'' }
+    : type === 'video'      ? { question:'', answer:'', proofImageUrl:'' }
     :                         { question:'', answer:'', imageUrl:'' }
   ]);
   const removeQ = (i) => onChange(questions.filter((_,j)=>j!==i));
@@ -157,6 +159,15 @@ function QuestionEditor({ questions, onChange, type }) {
                   <Input value={q.names?.[pi]||''} onChange={v=>updateName(i,pi,v)} placeholder="Nom de la personne"/>
                 </div>
               ))}
+            </div>
+          ) : type === 'video' ? (
+            <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+              <Input value={q.question||''} onChange={v=>updateQ(i,'question',v)} placeholder="Question"/>
+              <Input value={q.answer||''} onChange={v=>updateQ(i,'answer',v)} placeholder="Réponse"/>
+              <div>
+                <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.4)', marginBottom:'4px' }}>Preuve photo (facultatif)</div>
+                <ImageUpload value={q.proofImageUrl||''} onChange={v=>updateQ(i,'proofImageUrl',v)}/>
+              </div>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
@@ -293,6 +304,12 @@ function RoundEditor({ rounds, onChange }) {
             <div>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'8px' }}>Sous-manches</label>
               <SubRoundEditor subRounds={draft.subRounds||[]} onChange={sr=>setDraft({...draft,subRounds:sr})}/>
+            </div>
+          )}
+          {draft.type === 'video' && (
+            <div>
+              <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Fichier vidéo</label>
+              <FileUpload value={draft.videoUrl||''} onChange={v=>setDraft({...draft,videoUrl:v})} accept="video/*" label="🎬 Vidéo"/>
             </div>
           )}
           {!['mime','creative','timer'].includes(draft.type) && (
@@ -530,6 +547,45 @@ function ControlPanel({ gs, emit }) {
         </Section>
       )}
 
+      {/* Vidéo */}
+      {round?.type === 'video' && gs.videoRound && (
+        <Section title="Vidéo">
+          {gs.videoRound.phase === 'watching' && (
+            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'10px' }}>
+              {gs.videoRound.playing
+                ? <Btn onClick={() => emit('admin_video_pause')} color="#555">⏸ Pause</Btn>
+                : <Btn onClick={() => emit('admin_video_play')} color="#1565C0">▶ Lancer la vidéo</Btn>
+              }
+              <Btn onClick={() => emit('admin_video_to_questions')} color="#00695c" disabled={!questions.length}>
+                ➡ Passer aux questions
+              </Btn>
+            </div>
+          )}
+          {gs.videoRound.phase === 'question' && (
+            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                <Btn onClick={() => emit('admin_next_question')} color="#1b5e20" disabled={!hasMoreQ}>▶ Question suivante</Btn>
+                <Btn onClick={() => emit('admin_reveal_answer')} color="#00695c" disabled={gs.answerVisible}>✅ Révéler réponse</Btn>
+                <Btn onClick={() => emit('admin_reset_buzzer')} color="#6a1b9a">🔄 Buzzer</Btn>
+              </div>
+              {gs.question && (
+                <div style={{ padding:'10px', background:'rgba(0,0,0,0.3)', borderRadius:'6px', fontSize:'0.9rem', color:'rgba(255,255,255,0.7)' }}>
+                  Q{qIdx+1}/{questions.length} : {gs.question}
+                  {gs.answerVisible && <span style={{ color:'var(--green)', marginLeft:'8px' }}>→ {gs.answer}</span>}
+                </div>
+              )}
+              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                {['team1','team2'].map(team => (
+                  <div key={team} style={{ padding:'6px 14px', background: gs.buzzer?.winner===team?(team==='team1'?'rgba(229,57,53,0.3)':'rgba(21,101,192,0.3)'):'rgba(0,0,0,0.3)', border:`1px solid ${gs.buzzer?.winner===team?(team==='team1'?'var(--red-bright)':'var(--blue-light)'):'rgba(255,255,255,0.1)'}`, borderRadius:'6px', fontFamily:'var(--font-title)', fontSize:'0.85rem', color:'white' }}>
+                    {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]} {gs.buzzer?.winner===team?'✓ BUZZÉ':''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
+
       {/* Mimes */}
       {round?.type === 'mime' && gs.mime && (() => {
         const subRounds = round.subRounds || [];
@@ -730,11 +786,20 @@ export default function Admin() {
   const [rounds, setRounds] = useState([]);
   const [teamNames, setTeamNames] = useState({ team1:'Équipe 1', team2:'Équipe 2' });
   const [savedRounds, setSavedRounds] = useState(false);
+  const [bgMusicUrl, setBgMusicUrl] = useState('');
+  const [gameName, setGameName] = useState('CHALET QUIZ');
 
   useEffect(() => {
     if (gs?.rounds?.length && !savedRounds) { setRounds(gs.rounds); setSavedRounds(true); }
     if (gs?.teamNames) setTeamNames(gs.teamNames);
+    if (gs?.backgroundMusicUrl !== undefined) setBgMusicUrl(gs.backgroundMusicUrl);
+    if (gs?.gameName) setGameName(gs.gameName);
   }, [gs]);
+
+  const saveBgMusic = (url) => {
+    setBgMusicUrl(url);
+    emit('admin_set_background_music', { url });
+  };
 
   const saveRounds = () => {
     emit('admin_set_rounds', rounds);
@@ -787,6 +852,18 @@ export default function Admin() {
 
         {tab === 'config' && (
           <div>
+            <Section title="Nom du jeu">
+              <Input
+                value={gameName}
+                onChange={v => setGameName(v)}
+                placeholder="CHALET QUIZ"
+              />
+              <div style={{ marginTop:'8px' }}>
+                <Btn small onClick={() => emit('admin_set_game_name', { name: gameName })} color="#1565C0">
+                  ✅ Appliquer
+                </Btn>
+              </div>
+            </Section>
             <Section title="Noms des équipes">
               <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
                 <div style={{ flex:1, minWidth:'180px' }}>
@@ -797,6 +874,28 @@ export default function Admin() {
                   <label style={{ fontSize:'0.8rem', color:'var(--blue-light)', display:'block', marginBottom:'4px' }}>🔵 Équipe 2</label>
                   <Input value={teamNames.team2} onChange={v=>setTeamNames({...teamNames,team2:v})} placeholder="Équipe 2"/>
                 </div>
+              </div>
+            </Section>
+            <Section title="Musique de fond">
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>
+                  Jouée en boucle sur l'écran principal. Coupée automatiquement lors des jingles de manches et du blind test.
+                </div>
+                <FileUpload value={bgMusicUrl} onChange={saveBgMusic} accept="audio/*" label="🎵 Audio"/>
+                <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+                  <span style={{ fontFamily:'var(--font-title)', fontSize:'0.85rem', color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap' }}>
+                    🔊 Volume : {Math.round((gs?.bgMusicVolume ?? 0.25) * 100)}%
+                  </span>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    value={gs?.bgMusicVolume ?? 0.25}
+                    onChange={e => emit('admin_set_bg_music_volume', { volume: parseFloat(e.target.value) })}
+                    style={{ flex:1, accentColor:'var(--orange)' }}
+                  />
+                </div>
+                {bgMusicUrl && (
+                  <Btn small onClick={() => saveBgMusic('')} color="#c62828">⏹ Arrêter la musique</Btn>
+                )}
               </div>
             </Section>
             <Section title="Liens utiles">

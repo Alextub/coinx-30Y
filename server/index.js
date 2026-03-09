@@ -79,6 +79,10 @@ let gameState = {
   question: null,
   answer: null,
   answerVisible: false,
+  backgroundMusicUrl: '',
+  bgMusicVolume: 0.25,
+  gameName: 'CHALET QUIZ',
+  videoRound: { phase: 'watching', playing: false },
 };
 
 let timerInterval = null;
@@ -234,6 +238,9 @@ io.on('connection', (socket) => {
     } else if (gameState.round.type === 'creative') {
       pauseCreative();
       gameState.creative = { running: false, remaining: gameState.round.timerDuration || 300 };
+    } else if (gameState.round.type === 'video') {
+      gameState.currentQuestionIndex = -1;
+      gameState.videoRound = { phase: 'watching', playing: false };
     } else if (gameState.round.type === 'wager') {
       const q = gameState.round.questions[0];
       gameState.currentQuestionIndex = 0;
@@ -253,6 +260,7 @@ io.on('connection', (socket) => {
     const screenMap = {
       timer: 'timer_round', blind_test: 'blind_test', face_puzzle: 'face_puzzle',
       mime: 'mime', creative: 'creative', wager: 'wager', buzzer: 'question',
+      video: 'video_round',
     };
     gameState.screen = screenMap[round.type] || 'question';
     // Pour buzzer : afficher la première question
@@ -294,6 +302,9 @@ io.on('connection', (socket) => {
       gameState.buzzer = { active: true, winner: null, locked: [] };
     } else if (round.type === 'wager') {
       gameState.wager = { bet: 0, phase: 'betting', theme: q.theme || '', assignedTeam: q.team || 'team1' };
+    } else if (round.type === 'video') {
+      gameState.videoRound = { ...gameState.videoRound, phase: 'question', playing: false };
+      gameState.buzzer = { active: true, winner: null, locked: [] };
     }
     io.emit('game_state', gameState);
   });
@@ -329,6 +340,21 @@ io.on('connection', (socket) => {
 
   socket.on('admin_show_lobby', () => {
     gameState.screen = 'lobby';
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_set_background_music', ({ url }) => {
+    gameState.backgroundMusicUrl = url || '';
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_set_bg_music_volume', ({ volume }) => {
+    gameState.bgMusicVolume = Math.max(0, Math.min(1, volume));
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_set_game_name', ({ name }) => {
+    gameState.gameName = name || 'CHALET QUIZ';
     io.emit('game_state', gameState);
   });
 
@@ -459,6 +485,31 @@ io.on('connection', (socket) => {
 
   socket.on('admin_creative_resume', () => {
     startCreative();
+    io.emit('game_state', gameState);
+  });
+
+  // ── VIDEO ROUND ─────────────────────────────────────────────────────────────
+  socket.on('admin_video_play', () => {
+    gameState.videoRound.playing = true;
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_video_pause', () => {
+    gameState.videoRound.playing = false;
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_video_to_questions', () => {
+    const round = gameState.round;
+    if (!round || round.type !== 'video') return;
+    const q = round.questions?.[0];
+    if (!q) return;
+    gameState.currentQuestionIndex = 0;
+    gameState.question = q.question;
+    gameState.answer = q.answer;
+    gameState.answerVisible = false;
+    gameState.videoRound = { phase: 'question', playing: false };
+    gameState.buzzer = { active: true, winner: null, locked: [] };
     io.emit('game_state', gameState);
   });
 

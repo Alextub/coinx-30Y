@@ -1,29 +1,31 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --sky: #0a1628;
-  --sky2: #0d2240;
+  --sky: #160D08;
+  --sky2: #2A1810;
   --blue: #1565C0;
-  --blue-light: #42A5F5;
+  --blue-light: #00E5FF;
   --red: #E53935;
-  --red-bright: #FF1744;
-  --yellow: #FFD600;
+  --red-bright: #FF2D78;
+  --yellow: #FFD700;
   --yellow-bright: #FFEA00;
   --green: #00C853;
-  --white: #F5F5F5;
-  --snow: #E8EEF7;
+  --white: #F5F0E8;
+  --snow: #F5F0E8;
   --purple: #7B1FA2;
-  --orange: #FF6D00;
-  --teal: #00BCD4;
+  --orange: #FF8C00;
+  --teal: #00E5FF;
+  --ember: #C4620A;
+  --wood-panel: #4A2C1A;
 
-  --font-display: 'Bangers', cursive;
+  --font-display: 'Righteous', 'Bangers', cursive;
   --font-title: 'Fredoka One', cursive;
   --font-body: 'Nunito', sans-serif;
 
   --shadow-retro: 4px 4px 0px rgba(0,0,0,0.8);
-  --shadow-neon-blue: 0 0 20px #42A5F5, 0 0 40px #1565C0;
-  --shadow-neon-red: 0 0 20px #FF1744, 0 0 40px #E53935;
-  --shadow-neon-yellow: 0 0 20px #FFD600, 0 0 40px #FF6D00;
+  --shadow-neon-blue: 0 0 20px #00E5FF, 0 0 40px #0088AA;
+  --shadow-neon-red: 0 0 20px #FF2D78, 0 0 40px #CC0044;
+  --shadow-neon-yellow: 0 0 20px #FFD700, 0 0 40px #FF8C00;
 }
 
 html, body, #root {
@@ -41,7 +43,7 @@ html, body, #root {
 }
 
 .snowflake {
-  position: absolute; top: -20px; color: rgba(200,220,255,0.7);
+  position: absolute; top: -20px; color: rgba(245,240,232,0.75);
   font-size: 1rem; animation: fall linear infinite;
   user-select: none;
 }
@@ -55,9 +57,12 @@ html, body, #root {
   position: fixed; bottom: 0; left: 0; width: 100%; pointer-events: none; z-index: 0;
 }
 
-/* Retro border */
+/* Retro card — bois + néon */
 .retro-card {
-  background: var(--sky2);
+  background: repeating-linear-gradient(
+    92deg,
+    #2A1810 0px, #331d12 4px, #2A1810 8px, #3a2015 14px, #2A1810 20px
+  );
   border: 3px solid var(--blue-light);
   border-radius: 8px;
   box-shadow: var(--shadow-retro), var(--shadow-neon-blue);
@@ -67,9 +72,39 @@ html, body, #root {
 .retro-card::before {
   content: '';
   position: absolute; inset: -6px;
-  border: 2px dashed rgba(66,165,245,0.3);
+  border: 2px dashed rgba(0,229,255,0.25);
   border-radius: 12px;
   pointer-events: none;
+}
+
+/* Wood panel utility */
+.wood-panel {
+  background: repeating-linear-gradient(
+    92deg,
+    #4A2C1A 0px, #5a3520 4px, #4A2C1A 8px, #3e2514 14px, #4A2C1A 20px
+  );
+}
+
+/* Fireplace glow */
+.fireplace-glow {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 180px;
+  background: radial-gradient(ellipse 80% 100% at 50% 100%, rgba(196,98,10,0.35) 0%, rgba(255,140,0,0.12) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: ember-flicker 3s ease-in-out infinite;
+}
+
+@keyframes ember-flicker {
+  0%, 100% { opacity: 0.9; transform: scaleX(1); }
+  33%  { opacity: 1;   transform: scaleX(1.04); }
+  66%  { opacity: 0.75; transform: scaleX(0.97); }
+}
+
+@keyframes spotlight-sweep {
+  0%, 100% { opacity: 0.18; transform: rotate(-12deg); }
+  50%       { opacity: 0.28; transform: rotate(12deg); }
 }
 
 /* Buttons */

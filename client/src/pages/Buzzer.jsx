@@ -298,13 +298,36 @@ export default function Buzzer() {
           <div style={{ width:'100%' }}>
             <div style={{ fontFamily:'var(--font-title)', color:'rgba(255,255,255,0.6)', fontSize:'0.9rem', marginBottom:'10px', letterSpacing:'2px' }}>COULEUR DE L'ÉQUIPE</div>
             <div style={{ display:'flex', flexWrap:'wrap', gap:'10px', justifyContent:'center' }}>
-              {COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setProfileColor(c)}
-                  style={{ width:'44px', height:'44px', borderRadius:'50%', background:c, border: profileColor === c ? '4px solid white' : '3px solid rgba(255,255,255,0.2)', cursor:'pointer', boxShadow: profileColor === c ? `0 0 16px ${c}` : 'none', transform: profileColor === c ? 'scale(1.15)' : 'scale(1)', transition:'all 0.15s' }}
-                />
-              ))}
+              {COLORS.map(c => {
+                const otherTeam = team === 'team1' ? 'team2' : 'team1';
+                const takenByOther = gs?.teamColors?.[otherTeam] === c;
+                const selected = profileColor === c;
+                return (
+                  <button
+                    key={c}
+                    onClick={() => !takenByOther && setProfileColor(c)}
+                    disabled={takenByOther}
+                    title={takenByOther ? `Déjà prise par ${gs.teamNames?.[otherTeam]}` : ''}
+                    style={{
+                      width:'44px', height:'44px', borderRadius:'50%',
+                      background: takenByOther ? `${c}44` : c,
+                      border: selected ? '4px solid white' : takenByOther ? '3px solid rgba(255,255,255,0.1)' : '3px solid rgba(255,255,255,0.2)',
+                      cursor: takenByOther ? 'not-allowed' : 'pointer',
+                      boxShadow: selected ? `0 0 16px ${c}` : 'none',
+                      transform: selected ? 'scale(1.15)' : 'scale(1)',
+                      transition:'all 0.15s',
+                      position:'relative',
+                    }}
+                  >
+                    {takenByOther && (
+                      <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.1rem' }}>🔒</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ marginTop:'8px', fontSize:'0.78rem', color:'rgba(255,255,255,0.35)', fontFamily:'var(--font-body)', textAlign:'center' }}>
+              🔒 = déjà prise par l'autre équipe
             </div>
           </div>
 

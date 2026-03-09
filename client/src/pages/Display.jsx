@@ -11,7 +11,6 @@ function fmtTime(s) {
 
 // ── AUDIO ENGINE ───────────────────────────────────────────────────────────────
 let _audioCtx = null;
-let _droneStarted = false;
 
 function getCtx() {
   if (!_audioCtx || _audioCtx.state === 'closed') {
@@ -19,34 +18,6 @@ function getCtx() {
   }
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
   return _audioCtx;
-}
-
-function startAmbientDrone() {
-  if (_droneStarted) return;
-  _droneStarted = true;
-  try {
-    const ctx = getCtx();
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.035, ctx.currentTime + 4);
-    master.connect(ctx.destination);
-    // Accord mineur (A1, E2, A2) légèrement désaccordé pour l'effet de battement
-    [55, 55.35, 82.4, 82.8, 110].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      g.gain.value = i < 2 ? 1 : 0.5;
-      osc.connect(g); g.connect(master);
-      osc.start();
-    });
-    // LFO trémolo très lent
-    const lfo = ctx.createOscillator();
-    const lfoG = ctx.createGain();
-    lfo.frequency.value = 0.25; lfoG.gain.value = 0.012;
-    lfo.connect(lfoG); lfoG.connect(master.gain);
-    lfo.start();
-  } catch {}
 }
 
 function playTick(warning = false) {
@@ -102,9 +73,9 @@ function LobbyScreen({ gs }) {
         <h1 style={{
           fontFamily:'var(--font-display)', fontSize:'clamp(4rem,10vw,9rem)',
           color:'var(--yellow)', letterSpacing:'6px',
-          textShadow:'6px 6px 0 #E65100, 0 0 40px #FFD600, 0 0 80px #FF6D00',
+          textShadow:'6px 6px 0 #C4620A, 0 0 40px #FFD700, 0 0 80px #FF8C00',
           lineHeight:1,
-        }}>CHALET QUIZ</h1>
+        }}>{gs.gameName || 'CHALET QUIZ'}</h1>
         <div style={{
           fontFamily:'var(--font-title)', fontSize:'clamp(1.2rem,3vw,2rem)',
           color:'var(--blue-light)', letterSpacing:'8px', marginTop:'8px',
@@ -127,7 +98,7 @@ function LobbyScreen({ gs }) {
               color:'white',
             }}>
               {photo
-                ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}`, boxShadow:`0 0 15px ${color}88` }}/>
+                ? <img src={photo} alt="" style={{ width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${color}`, boxShadow:`0 0 20px ${color}88` }}/>
                 : <span style={{ fontSize:'2.5rem' }}>{i===0?'🔴':'🔵'}</span>
               }
               {name}
@@ -146,7 +117,7 @@ function RoundIntroScreen({ gs, audioUnlocked }) {
   const round = gs.round;
   const [step, setStep] = useState(0);
   const audioRef = useRef(null);
-  const typeLabels = { buzzer:'🔔 BUZZER', timer:'⏱ TIMER', blind_test:'🎵 BLIND TEST', face_puzzle:'👤 TÊTES MÉLANGÉES', wager:'🎲 PARIS', mime:'🎭 MIMES', creative:'🎨 CRÉATIVITÉ' };
+  const typeLabels = { buzzer:'🔔 BUZZER', timer:'⏱ TIMER', blind_test:'🎵 BLIND TEST', face_puzzle:'👤 TÊTES MÉLANGÉES', wager:'🎲 PARIS', mime:'🎭 MIMES', creative:'🎨 CRÉATIVITÉ', video:'🎬 VIDÉO' };
 
   useEffect(() => {
     setStep(0);
@@ -160,10 +131,13 @@ function RoundIntroScreen({ gs, audioUnlocked }) {
     const audio = audioRef.current;
     if (!audio || !round?.introAudioUrl) return;
     audio.volume = 0.7;
+    audio.currentTime = 0;
+    audio.load();
     const tryPlay = () => audio.play().catch(() => {});
-    if (audioUnlocked) tryPlay();
-    // Arrêt automatique après 5 secondes
-    const stopTimer = setTimeout(() => { audio.pause(); audio.currentTime = 0; }, 5000);
+    // Play immediately if unlocked, otherwise wait for unlock signal
+    tryPlay();
+    // Arrêt automatique après 10 secondes
+    const stopTimer = setTimeout(() => { audio.pause(); audio.currentTime = 0; }, 10000);
     return () => { clearTimeout(stopTimer); audio.pause(); audio.currentTime = 0; };
   }, [round?.introAudioUrl, gs.currentRoundIndex, audioUnlocked]);
 
@@ -200,7 +174,7 @@ function RoundIntroScreen({ gs, audioUnlocked }) {
           <div style={{
             fontFamily:'var(--font-display)', fontSize:'clamp(4rem,12vw,10rem)',
             color:'var(--yellow)', letterSpacing:'4px', lineHeight:1,
-            textShadow:'6px 6px 0 #E65100, 0 0 60px #FFD600, 0 0 120px #FF6D00',
+            textShadow:'6px 6px 0 #C4620A, 0 0 60px #FFD600, 0 0 120px #FF6D00',
           }}>
             {round?.name || 'Nouvelle Manche'}
           </div>
@@ -272,18 +246,24 @@ function QuestionScreen({ gs }) {
         {['team1','team2'].map(team => {
           const hit = gs.buzzer?.winner === team;
           const locked = gs.buzzer?.locked?.includes(team);
+          const tColor = gs.teamColors?.[team] || (team==='team1'?'#FF2D78':'#00E5FF');
+          const tPhoto = gs.teamPhotos?.[team];
           return (
             <div key={team} style={{
               padding:'10px 24px',
               fontFamily:'var(--font-title)', fontSize:'1.2rem',
-              background: hit ? (team==='team1'?'rgba(229,57,53,0.4)':'rgba(21,101,192,0.4)') : locked ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.05)',
-              border:`3px solid ${hit?(team==='team1'?'var(--red-bright)':'var(--blue-light)'):'rgba(255,255,255,0.2)'}`,
+              display:'flex', alignItems:'center', gap:'10px',
+              background: hit ? `${tColor}33` : locked ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.05)',
+              border:`3px solid ${hit ? tColor : 'rgba(255,255,255,0.2)'}`,
               borderRadius:'8px',
-              boxShadow: hit ? `0 0 30px ${team==='team1'?'#FF1744':'#42A5F5'}` : 'none',
+              boxShadow: hit ? `0 0 30px ${tColor}88` : 'none',
               color: locked ? 'rgba(255,255,255,0.3)' : 'white',
               animation: hit ? 'pulse-glow 1s ease infinite' : 'none',
             }}>
-              {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+              {tPhoto
+                ? <img src={tPhoto} alt="" style={{ width:'28px', height:'28px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${tColor}` }}/>
+                : <span>{team==='team1'?'🔴':'🔵'}</span>}
+              {gs.teamNames?.[team]}
               {hit && ' ✓ BUZZÉ !'}
               {locked && ' 🔒'}
             </div>
@@ -343,7 +323,9 @@ function TimerRoundScreen({ gs }) {
 
       {/* Timers */}
       <div style={{ display:'flex', gap:'48px', alignItems:'center' }}>
-        {[{team:'team1',val:t1,color:'var(--red-bright)'},{team:'team2',val:t2,color:'var(--blue-light)'}].map(({team,val,color})=>{
+        {[{team:'team1',val:t1},{team:'team2',val:t2}].map(({team,val})=>{
+          const color = gs.teamColors?.[team] || (team==='team1'?'#FF2D78':'#00E5FF');
+          const photo = gs.teamPhotos?.[team];
           const active = gs.timer?.active === team;
           const warning = val <= 10;
           return (
@@ -357,8 +339,11 @@ function TimerRoundScreen({ gs }) {
               animation: active ? 'pulse-glow 1.5s ease infinite' : 'none',
               transition:'all 0.3s ease',
             }}>
-              <div style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.6)' }}>
-                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.7)' }}>
+                {photo
+                  ? <img src={photo} alt="" style={{ width:'32px', height:'32px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${color}` }}/>
+                  : <span>{team==='team1'?'🔴':'🔵'}</span>}
+                {gs.teamNames?.[team]}
               </div>
               <div style={{
                 fontFamily:'var(--font-display)', fontSize:'clamp(3rem,7vw,6rem)',
@@ -521,7 +506,7 @@ function BlindTestScreen({ gs }) {
       {/* Révélation */}
       {gs.blindTest?.revealed && (
         <div className="anim-bounce-in" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', textAlign:'center' }}>
-          <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,5.5rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #E65100, 0 0 40px #FFD600', lineHeight:1.1 }}>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,5.5rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #C4620A, 0 0 40px #FFD600', lineHeight:1.1 }}>
             {gs.answer}
           </div>
           {gs.question && (
@@ -564,7 +549,7 @@ function MimeScreen({ gs }) {
           <div style={{ fontFamily:'var(--font-title)', fontSize:'0.85rem', color:'rgba(255,255,255,0.4)', letterSpacing:'3px' }}>
             SOUS-MANCHE {srIdx + 1}/{subRounds.length}
           </div>
-          <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.8rem,4vw,3rem)', color:'var(--yellow)', textShadow:'3px 3px 0 #E65100, 0 0 20px #FFD600', letterSpacing:'3px' }}>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.8rem,4vw,3rem)', color:'var(--yellow)', textShadow:'3px 3px 0 #C4620A, 0 0 20px #FFD600', letterSpacing:'3px' }}>
             {currentSr.label}
           </div>
         </div>
@@ -622,7 +607,7 @@ function CreativeScreen({ gs }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'24px', position:'relative', zIndex:1, padding:'24px' }}>
-      <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2rem,5vw,4rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #E65100, 0 0 30px #FFD600', letterSpacing:'4px', textAlign:'center' }}>
+      <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2rem,5vw,4rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #C4620A, 0 0 30px #FFD600', letterSpacing:'4px', textAlign:'center' }}>
         {gs.round?.name}
       </div>
 
@@ -689,7 +674,7 @@ function WagerScreen({ gs }) {
             {assignedTeam==='team1'?'🔴':'🔵'} {gs.teamNames?.[assignedTeam]} — MISEZ !
           </div>
           <div className="anim-bounce-in retro-card" style={{ padding:'40px 60px', textAlign:'center', maxWidth:'800px' }}>
-            <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,5.5rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #E65100, 0 0 40px #FFD600', lineHeight:1.1 }}>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,5.5rem)', color:'var(--yellow)', textShadow:'4px 4px 0 #C4620A, 0 0 40px #FFD600', lineHeight:1.1 }}>
               {theme || '?'}
             </div>
           </div>
@@ -795,9 +780,11 @@ function RoundRecapScreen({ gs }) {
               boxShadow: isLeader ? `0 0 50px ${color}88` : 'none',
               transition:'all 0.5s ease',
             }}>
-              {photo && <img src={photo} alt="" style={{ width:'56px', height:'56px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}` }}/>}
-              <div style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.6)' }}>
-                {!photo && (team==='team1'?'🔴':'🔵')} {gs.teamNames?.[team]}
+              {photo
+                ? <img src={photo} alt="" style={{ width:'88px', height:'88px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${color}`, boxShadow:`0 0 20px ${color}66` }}/>
+                : <div style={{ fontSize:'3rem' }}>{team==='team1'?'🔴':'🔵'}</div>}
+              <div style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.7)' }}>
+                {gs.teamNames?.[team]}
               </div>
               {pts > 0 && (
                 <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'var(--green)', textShadow:'0 0 12px #00C853' }}>
@@ -848,7 +835,7 @@ function ScoresScreen({ gs }) {
               boxShadow: winner===team ? `0 0 50px ${color}88` : 'none',
             }}>
               {photo
-                ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}`, boxShadow:`0 0 15px ${color}88` }}/>
+                ? <img src={photo} alt="" style={{ width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${color}`, boxShadow:`0 0 20px ${color}88` }}/>
                 : <div style={{ fontSize:'3rem' }}>{winner===team?'🥇':emoji}</div>
               }
               <div style={{ fontFamily:'var(--font-title)', fontSize:'1.3rem', color:'rgba(255,255,255,0.7)' }}>{gs.teamNames?.[team]}</div>
@@ -863,6 +850,85 @@ function ScoresScreen({ gs }) {
   );
 }
 
+function VideoRoundScreen({ gs }) {
+  const videoRef = useRef(null);
+  const q = gs.round?.questions?.[gs.currentQuestionIndex];
+  const phase = gs.videoRound?.phase || 'watching';
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (gs.videoRound?.playing) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [gs.videoRound?.playing]);
+
+  useEffect(() => {
+    if (phase === 'watching' && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [phase, gs.currentRoundIndex]);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'24px', position:'relative', zIndex:1, padding:'20px' }}>
+      <div style={{ fontFamily:'var(--font-title)', color:'var(--teal)', letterSpacing:'4px', fontSize:'1rem' }}>
+        {gs.round?.name}
+      </div>
+
+      {phase === 'watching' && (
+        gs.round?.videoUrl
+          ? <video ref={videoRef} src={gs.round.videoUrl} style={{ maxWidth:'85vw', maxHeight:'65vh', borderRadius:'8px', border:'3px solid var(--blue-light)', boxShadow:'var(--shadow-neon-blue)' }}/>
+          : <div style={{ fontSize:'8rem' }}>🎬</div>
+      )}
+
+      {phase === 'question' && (
+        <>
+          {gs.question && (
+            <div className="anim-slide-up retro-card" style={{ padding:'28px 48px', maxWidth:'900px', textAlign:'center', fontSize:'clamp(1.2rem,2.5vw,2.2rem)', fontFamily:'var(--font-body)', fontWeight:800, lineHeight:1.4 }}>
+              {gs.question}
+            </div>
+          )}
+
+          {gs.answerVisible && (
+            <>
+              <div className="anim-bounce-in" style={{ padding:'20px 44px', background:'rgba(0,200,83,0.15)', border:'3px solid var(--green)', borderRadius:'12px', boxShadow:'0 0 30px rgba(0,200,83,0.4)', fontSize:'clamp(1.2rem,2.5vw,2rem)', fontFamily:'var(--font-title)', color:'var(--green)', textAlign:'center' }}>
+                ✅ {gs.answer}
+              </div>
+              {q?.proofImageUrl && (
+                <img src={q.proofImageUrl} alt="preuve" style={{ maxHeight:'35vh', maxWidth:'60vw', objectFit:'contain', borderRadius:'8px', border:'3px solid var(--green)', boxShadow:'0 0 20px rgba(0,200,83,0.4)' }}/>
+              )}
+            </>
+          )}
+
+          <div style={{ display:'flex', gap:'32px' }}>
+            {['team1','team2'].map(team => {
+              const hit = gs.buzzer?.winner === team;
+              const locked = gs.buzzer?.locked?.includes(team);
+              return (
+                <div key={team} style={{
+                  padding:'10px 24px', fontFamily:'var(--font-title)', fontSize:'1.2rem',
+                  background: hit ? (team==='team1'?'rgba(255,45,120,0.3)':'rgba(0,229,255,0.2)') : 'rgba(255,255,255,0.05)',
+                  border:`3px solid ${hit?(team==='team1'?'var(--red-bright)':'var(--blue-light)'):'rgba(255,255,255,0.2)'}`,
+                  borderRadius:'8px',
+                  boxShadow: hit ? `0 0 30px ${team==='team1'?'#FF2D78':'#00E5FF'}` : 'none',
+                  color: locked ? 'rgba(255,255,255,0.3)' : 'white',
+                  animation: hit ? 'pulse-glow 1s ease infinite' : 'none',
+                }}>
+                  {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+                  {hit && ' ✓ BUZZÉ !'}{locked && ' 🔒'}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function EndScreen({ gs }) {
   const team1 = gs.scores?.team1 || 0;
   const team2 = gs.scores?.team2 || 0;
@@ -871,7 +937,7 @@ function EndScreen({ gs }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'32px', position:'relative', zIndex:1, textAlign:'center' }}>
       <div style={{ fontSize:'6rem' }}>🏔️🎿🏆</div>
-      <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(3rem,8vw,7rem)', color:'var(--yellow)', textShadow:'6px 6px 0 #E65100, 0 0 60px #FFD600', letterSpacing:'4px' }}>
+      <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(3rem,8vw,7rem)', color:'var(--yellow)', textShadow:'6px 6px 0 #C4620A, 0 0 60px #FFD600', letterSpacing:'4px' }}>
         FIN DU JEU !
       </div>
       {winner ? (
@@ -884,9 +950,20 @@ function EndScreen({ gs }) {
       ) : (
         <div style={{ fontFamily:'var(--font-display)', fontSize:'3rem', color:'var(--teal)' }}>🤝 MATCH NUL !</div>
       )}
-      <div style={{ display:'flex', gap:'32px', fontFamily:'var(--font-title)', fontSize:'1.4rem' }}>
-        <span style={{ color:'var(--red-bright)' }}>🔴 {gs.teamNames?.team1}: {team1} pts</span>
-        <span style={{ color:'var(--blue-light)' }}>🔵 {gs.teamNames?.team2}: {team2} pts</span>
+      <div style={{ display:'flex', gap:'32px', fontFamily:'var(--font-title)', fontSize:'1.4rem', alignItems:'center' }}>
+        {['team1','team2'].map(team => {
+          const color = gs.teamColors?.[team] || (team==='team1'?'#FF2D78':'#00E5FF');
+          const photo = gs.teamPhotos?.[team];
+          const score = gs.scores?.[team] || 0;
+          return (
+            <span key={team} style={{ color, display:'flex', alignItems:'center', gap:'8px' }}>
+              {photo
+                ? <img src={photo} alt="" style={{ width:'28px', height:'28px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${color}` }}/>
+                : <span>{team==='team1'?'🔴':'🔵'}</span>}
+              {gs.teamNames?.[team]}: {score} pts
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -896,11 +973,32 @@ function EndScreen({ gs }) {
 export default function Display() {
   const { gameState: gs, connected } = useSocket();
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const bgMusicRef = useRef(null);
 
   const unlockAudio = () => {
+    getCtx(); // unlock Web Audio context
     setAudioUnlocked(true);
-    startAmbientDrone();
   };
+
+  // Screens where background music must be silenced
+  const MUTED_SCREENS = ['round_intro', 'blind_test', 'video_round'];
+
+  // Background music: start/stop when url/screen/volume changes
+  useEffect(() => {
+    const audio = bgMusicRef.current;
+    if (!audio) return;
+    const muted = MUTED_SCREENS.includes(gs?.screen);
+    if (audioUnlocked && gs?.backgroundMusicUrl && !muted) {
+      audio.volume = gs?.bgMusicVolume ?? 0.25;
+      if (audio.src !== gs.backgroundMusicUrl) {
+        audio.src = gs.backgroundMusicUrl;
+        audio.load();
+      }
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [audioUnlocked, gs?.backgroundMusicUrl, gs?.bgMusicVolume, gs?.screen]);
 
   if (!gs) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--blue-light)' }}>
@@ -919,6 +1017,7 @@ export default function Display() {
       case 'mime': return <MimeScreen gs={gs}/>;
       case 'creative': return <CreativeScreen gs={gs}/>;
       case 'blind_test': return <BlindTestScreen gs={gs}/>;
+      case 'video_round': return <VideoRoundScreen gs={gs}/>;
       case 'round_recap': return <RoundRecapScreen gs={gs}/>;
       case 'scores': return <ScoresScreen gs={gs}/>;
       case 'end': return <EndScreen gs={gs}/>;
@@ -931,6 +1030,8 @@ export default function Display() {
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden' }}>
       <Snow count={35}/>
+      <div className="fireplace-glow"/>
+      <audio ref={bgMusicRef} loop style={{ display:'none' }}/>
       {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} teamColors={gs.teamColors} teamPhotos={gs.teamPhotos} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
@@ -939,10 +1040,10 @@ export default function Display() {
         <button onClick={unlockAudio} style={{
           position:'fixed', bottom:'16px', left:'50%', transform:'translateX(-50%)',
           zIndex:999, padding:'10px 24px',
-          background:'rgba(0,200,83,0.9)', border:'2px solid #00C853',
+          background:'rgba(196,98,10,0.9)', border:'2px solid #FF8C00',
           borderRadius:'24px', color:'white', fontFamily:'var(--font-title)',
           fontSize:'1rem', cursor:'pointer', letterSpacing:'2px',
-          boxShadow:'0 0 20px rgba(0,200,83,0.5)',
+          boxShadow:'0 0 20px rgba(196,98,10,0.5)',
           animation:'blink 2s ease infinite',
         }}>
           🔊 ACTIVER LE SON
