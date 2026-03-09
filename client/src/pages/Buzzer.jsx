@@ -77,9 +77,25 @@ export default function Buzzer() {
 
   const playQuack = (win) => {
     try {
-      const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
-      audio.volume = win ? 0.9 : 0.4;
-      audio.play().catch(() => {});
+      if (win) {
+        const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
+        audio.volume = 0.9;
+        audio.play().catch(() => {});
+      } else {
+        if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtx.current;
+        const osc = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.45);
+        filter.type = 'bandpass'; filter.frequency.value = 700; filter.Q.value = 3;
+        gain.gain.setValueAtTime(0.45, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.5);
+      }
     } catch(e) {}
   };
 

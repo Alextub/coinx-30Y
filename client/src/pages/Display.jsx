@@ -971,7 +971,7 @@ function EndScreen({ gs }) {
 
 // ── MAIN DISPLAY ───────────────────────────────────────────────────────────────
 export default function Display() {
-  const { gameState: gs, connected } = useSocket();
+  const { gameState: gs, connected, on } = useSocket();
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const bgMusicRef = useRef(null);
 
@@ -979,6 +979,17 @@ export default function Display() {
     getCtx(); // unlock Web Audio context
     setAudioUnlocked(true);
   };
+
+  // Quack on buzzer hit
+  useEffect(() => {
+    return on('buzzer_hit', () => {
+      try {
+        const audio = new Audio(import.meta.env.BASE_URL + 'sounds/quack.mp3');
+        audio.volume = 0.85;
+        audio.play().catch(() => {});
+      } catch(e) {}
+    });
+  }, []);
 
   // Screens where background music must be silenced
   const MUTED_SCREENS = ['round_intro', 'blind_test', 'video_round'];
