@@ -250,6 +250,25 @@ io.on('connection', (socket) => {
     io.emit('game_state', gameState);
   });
 
+  socket.on('admin_reset_game', () => {
+    gameState.screen = 'waiting';
+    gameState.scores = { team1: 0, team2: 0 };
+    gameState.roundScores = { team1: 0, team2: 0 };
+    gameState.prevScores = { team1: 0, team2: 0 };
+    gameState.teamNames = { team1: 'Équipe 1', team2: 'Équipe 2' };
+    gameState.teamColors = { team1: '#FF1744', team2: '#42A5F5' };
+    gameState.teamPhotos = { team1: null, team2: null };
+    gameState.currentRoundIndex = -1;
+    gameState.currentQuestionIndex = -1;
+    gameState.round = null;
+    gameState.question = null;
+    gameState.answer = null;
+    gameState.answerVisible = false;
+    gameState.buzzer = { active: false, winner: null, locked: [] };
+    saveConfig();
+    io.emit('game_state', gameState);
+  });
+
   socket.on('admin_next_round', () => {
     const nextIdx = gameState.currentRoundIndex + 1;
     if (nextIdx >= gameState.rounds.length) {

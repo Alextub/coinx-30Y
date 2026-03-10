@@ -395,6 +395,17 @@ function ControlPanel({ gs, emit }) {
             <Btn onClick={() => emit('admin_start_round')} color="#00695c" full>▶ Démarrer la manche</Btn>
           </div>
         )}
+        <div style={{ marginTop:'10px', borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:'10px' }}>
+          <Btn
+            onClick={() => {
+              if (window.confirm('Réinitialiser la partie ? Les scores, noms, couleurs et photos d\'équipes seront remis à zéro. La config (manches, musiques) est conservée.')) {
+                emit('admin_reset_game');
+              }
+            }}
+            color="#b71c1c"
+            full
+          >🔄 Réinitialiser la partie</Btn>
+        </div>
       </Section>
 
       {/* Aperçu suivant */}
