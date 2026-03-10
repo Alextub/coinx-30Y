@@ -787,18 +787,25 @@ export default function Admin() {
   const [teamNames, setTeamNames] = useState({ team1:'Équipe 1', team2:'Équipe 2' });
   const [savedRounds, setSavedRounds] = useState(false);
   const [bgMusicUrl, setBgMusicUrl] = useState('');
+  const [lobbyMusicUrl, setLobbyMusicUrl] = useState('');
   const [gameName, setGameName] = useState('CHALET QUIZ');
 
   useEffect(() => {
     if (gs?.rounds?.length && !savedRounds) { setRounds(gs.rounds); setSavedRounds(true); }
     if (gs?.teamNames) setTeamNames(gs.teamNames);
     if (gs?.backgroundMusicUrl !== undefined) setBgMusicUrl(gs.backgroundMusicUrl);
+    if (gs?.lobbyMusicUrl !== undefined) setLobbyMusicUrl(gs.lobbyMusicUrl);
     if (gs?.gameName) setGameName(gs.gameName);
   }, [gs]);
 
   const saveBgMusic = (url) => {
     setBgMusicUrl(url);
     emit('admin_set_background_music', { url });
+  };
+
+  const saveLobbyMusic = (url) => {
+    setLobbyMusicUrl(url);
+    emit('admin_set_lobby_music', { url });
   };
 
   const saveRounds = () => {
@@ -878,8 +885,18 @@ export default function Admin() {
             </Section>
             <Section title="Musique de fond">
               <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>
-                  Jouée en boucle sur l'écran principal. Coupée automatiquement lors des jingles de manches et du blind test.
+                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', fontFamily:'var(--font-title)', letterSpacing:'1px' }}>
+                  🏠 LOBBY (écran d'accueil)
+                </div>
+                <FileUpload value={lobbyMusicUrl} onChange={saveLobbyMusic} accept="audio/*" label="🎵 Audio"/>
+                {lobbyMusicUrl && (
+                  <Btn small onClick={() => saveLobbyMusic('')} color="#c62828">⏹ Retirer</Btn>
+                )}
+                <div style={{ borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:'12px', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', fontFamily:'var(--font-title)', letterSpacing:'1px' }}>
+                  🎮 JEU (pendant les manches)
+                </div>
+                <div style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.4)' }}>
+                  Coupée automatiquement lors des jingles de manches et du blind test.
                 </div>
                 <FileUpload value={bgMusicUrl} onChange={saveBgMusic} accept="audio/*" label="🎵 Audio"/>
                 <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>

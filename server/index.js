@@ -27,7 +27,7 @@ app.post('/upload', upload.single('image'), (_, res) => {
 
 // ── CONFIG PERSISTENCE ─────────────────────────────────────────────────────────
 const CONFIG_FILE = path.join(__dirname, 'game-config.json');
-const CONFIG_KEYS = ['rounds', 'teamNames', 'teamColors', 'teamPhotos', 'gameName', 'backgroundMusicUrl', 'bgMusicVolume'];
+const CONFIG_KEYS = ['rounds', 'teamNames', 'teamColors', 'teamPhotos', 'gameName', 'backgroundMusicUrl', 'bgMusicVolume', 'lobbyMusicUrl'];
 
 function saveConfig() {
   const config = {};
@@ -121,6 +121,7 @@ let gameState = {
   answerVisible: false,
   backgroundMusicUrl: '',
   bgMusicVolume: 0.25,
+  lobbyMusicUrl: '',
   gameName: 'CHALET QUIZ',
   videoRound: { phase: 'watching', playing: false },
 };
@@ -386,6 +387,12 @@ io.on('connection', (socket) => {
 
   socket.on('admin_show_lobby', () => {
     gameState.screen = 'lobby';
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_set_lobby_music', ({ url }) => {
+    gameState.lobbyMusicUrl = url || '';
+    saveConfig();
     io.emit('game_state', gameState);
   });
 

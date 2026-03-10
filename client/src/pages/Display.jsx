@@ -974,6 +974,7 @@ export default function Display() {
   const { gameState: gs, connected, on } = useSocket();
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const bgMusicRef = useRef(null);
+  const lobbyMusicRef = useRef(null);
 
   const unlockAudio = () => {
     getCtx(); // unlock Web Audio context
@@ -993,20 +994,30 @@ export default function Display() {
     });
   }, []);
 
-  // Screens where background music must be silenced
+  const isLobby = gs?.screen === 'lobby';
   const MUTED_SCREENS = ['round_intro', 'blind_test', 'video_round'];
 
-  // Background music: start/stop when url/screen/volume changes
+  // Lobby music: plays only on lobby screen
+  useEffect(() => {
+    const audio = lobbyMusicRef.current;
+    if (!audio) return;
+    if (audioUnlocked && gs?.lobbyMusicUrl && isLobby) {
+      audio.volume = gs?.bgMusicVolume ?? 0.25;
+      if (audio.src !== gs.lobbyMusicUrl) { audio.src = gs.lobbyMusicUrl; audio.load(); }
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [audioUnlocked, gs?.lobbyMusicUrl, gs?.bgMusicVolume, isLobby]);
+
+  // Background music: plays everywhere except lobby + muted screens
   useEffect(() => {
     const audio = bgMusicRef.current;
     if (!audio) return;
-    const muted = MUTED_SCREENS.includes(gs?.screen);
+    const muted = MUTED_SCREENS.includes(gs?.screen) || isLobby;
     if (audioUnlocked && gs?.backgroundMusicUrl && !muted) {
       audio.volume = gs?.bgMusicVolume ?? 0.25;
-      if (audio.src !== gs.backgroundMusicUrl) {
-        audio.src = gs.backgroundMusicUrl;
-        audio.load();
-      }
+      if (audio.src !== gs.backgroundMusicUrl) { audio.src = gs.backgroundMusicUrl; audio.load(); }
       audio.play().catch(() => {});
     } else {
       audio.pause();
@@ -1045,6 +1056,7 @@ export default function Display() {
       <Snow count={35}/>
       <div className="fireplace-glow"/>
       <audio ref={bgMusicRef} loop style={{ display:'none' }}/>
+      <audio ref={lobbyMusicRef} loop style={{ display:'none' }}/>
       {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} teamColors={gs.teamColors} teamPhotos={gs.teamPhotos} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
