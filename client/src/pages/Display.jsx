@@ -65,6 +65,118 @@ function playEndSound() {
 
 // ── SUB-SCREENS ────────────────────────────────────────────────────────────────
 
+function WaitingScreen() {
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', justifyContent:'center',
+      height:'100%', position:'relative', zIndex:1,
+    }}>
+      {/* intentionally empty — just snow + fireplace glow from parent */}
+    </div>
+  );
+}
+
+function GameIntroScreen({ gs }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    setStep(0);
+    const timers = [
+      setTimeout(() => setStep(1), 400),
+      setTimeout(() => setStep(2), 1600),
+      setTimeout(() => setStep(3), 3200),
+      setTimeout(() => setStep(4), 5000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div style={{
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+      height:'100%', gap:'28px', position:'relative', zIndex:1, overflow:'hidden',
+    }}>
+      {/* Rayons rotatifs */}
+      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
+        <div style={{
+          width:'250vmax', height:'250vmax',
+          background:'conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.04) 8deg, transparent 16deg, transparent 24deg, rgba(255,140,0,0.03) 32deg, transparent 40deg)',
+          animation: step >= 1 ? 'rays 25s linear infinite' : 'none',
+          transformOrigin:'center',
+          transition:'opacity 1.5s ease',
+          opacity: step >= 1 ? 1 : 0,
+        }}/>
+      </div>
+      {/* Halo central */}
+      <div style={{
+        position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+        width:'70vw', height:'70vw', borderRadius:'50%',
+        background:'radial-gradient(circle, rgba(196,98,10,0.12) 0%, rgba(255,215,0,0.05) 40%, transparent 70%)',
+        pointerEvents:'none',
+        opacity: step >= 1 ? 1 : 0, transition:'opacity 2s ease',
+      }}/>
+
+      {/* Nom du jeu */}
+      {step >= 2 && (
+        <div className="anim-zoom-in" style={{ position:'relative', textAlign:'center', padding:'0 20px' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, overflow:'hidden', pointerEvents:'none' }}>
+            <div style={{ position:'absolute', top:'-20%', bottom:'-20%', width:'40%', background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)', animation:'shine 1.4s ease 0.2s both' }}/>
+          </div>
+          <div style={{
+            fontFamily:'var(--font-display)', fontSize:'clamp(5rem,14vw,12rem)',
+            color:'var(--yellow)', letterSpacing:'6px', lineHeight:1,
+            textShadow:'8px 8px 0 #C4620A, 0 0 80px #FFD700, 0 0 160px #FF8C00',
+          }}>
+            {gs.gameName || 'CHALET QUIZ'}
+          </div>
+        </div>
+      )}
+
+      {/* Sous-titre */}
+      {step >= 3 && (
+        <div className="anim-slide-up" style={{
+          fontFamily:'var(--font-title)', fontSize:'clamp(1.2rem,3vw,2.2rem)',
+          color:'var(--blue-light)', letterSpacing:'10px',
+          textShadow:'var(--shadow-neon-blue)',
+        }}>
+          ❄ ÉDITION MONTAGNE ❄
+        </div>
+      )}
+
+      {/* Équipes */}
+      {step >= 4 && (
+        <div className="anim-slide-up" style={{ display:'flex', gap:'40px', marginTop:'8px' }}>
+          {(['team1','team2']).map((team, i) => {
+            const name = gs?.teamNames?.[team] || (i===0?'Équipe 1':'Équipe 2');
+            const color = gs?.teamColors?.[team] || (i===0?'#FF2D78':'#00E5FF');
+            const photo = gs?.teamPhotos?.[team];
+            return (
+              <div key={team} style={{
+                display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
+                padding:'20px 36px',
+                background:`${color}22`,
+                border:`3px solid ${color}`,
+                borderRadius:'12px',
+                boxShadow:`0 0 30px ${color}66`,
+                color:'white', fontFamily:'var(--font-title)', fontSize:'1.4rem',
+              }}>
+                {photo
+                  ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}` }}/>
+                  : <span style={{ fontSize:'2.5rem' }}>{i===0?'🔴':'🔵'}</span>}
+                {name}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Montagnes déco */}
+      <div style={{ position:'absolute', bottom:'4%', left:0, right:0, display:'flex', justifyContent:'center', fontSize:'3rem', opacity:0.1, letterSpacing:'-6px', userSelect:'none', pointerEvents:'none' }}>
+        🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️
+      </div>
+    </div>
+  );
+}
+
 function LobbyScreen({ gs }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'32px', position:'relative', zIndex:1 }}>
@@ -994,7 +1106,7 @@ export default function Display() {
     });
   }, []);
 
-  const isLobby = gs?.screen === 'lobby';
+  const isLobby = gs?.screen === 'lobby' || gs?.screen === 'game_intro';
   const MUTED_SCREENS = ['round_intro', 'blind_test', 'video_round'];
 
   // Lobby music: plays only on lobby screen
@@ -1045,11 +1157,13 @@ export default function Display() {
       case 'round_recap': return <RoundRecapScreen gs={gs}/>;
       case 'scores': return <ScoresScreen gs={gs}/>;
       case 'end': return <EndScreen gs={gs}/>;
+      case 'waiting': return <WaitingScreen/>;
+      case 'game_intro': return <GameIntroScreen gs={gs}/>;
       default: return <LobbyScreen gs={gs}/>;
     }
   };
 
-  const showScoreBar = !['lobby','end','scores','round_intro','round_recap'].includes(gs.screen);
+  const showScoreBar = !['lobby','end','scores','round_intro','round_recap','waiting','game_intro'].includes(gs.screen);
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden' }}>

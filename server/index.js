@@ -72,7 +72,7 @@ const io = new Server(server, {
 
 // ── GAME STATE ────────────────────────────────────────────────────────────────
 let gameState = {
-  screen: 'lobby',      // lobby | question | scores | timer_round | blind_test | face_puzzle | wager | mime | creative | end
+  screen: 'waiting',    // waiting | lobby | question | scores | timer_round | blind_test | face_puzzle | wager | mime | creative | end
   round: null,          // current round config
   rounds: [],           // all rounds configured by admin
   currentRoundIndex: -1,
@@ -244,7 +244,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin_start_game', () => {
-    gameState.screen = 'lobby';
+    gameState.screen = 'waiting';
     gameState.scores = { team1: 0, team2: 0 };
     gameState.currentRoundIndex = -1;
     io.emit('game_state', gameState);
@@ -387,6 +387,11 @@ io.on('connection', (socket) => {
 
   socket.on('admin_show_lobby', () => {
     gameState.screen = 'lobby';
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_launch_intro', () => {
+    gameState.screen = 'game_intro';
     io.emit('game_state', gameState);
   });
 

@@ -380,6 +380,16 @@ function ControlPanel({ gs, emit }) {
           <Btn onClick={() => emit('admin_show_round_recap')} color="#6a1b9a" disabled={!round}>📊 Bilan de manche</Btn>
           <Btn onClick={() => emit('admin_next_round')} color="#1565C0">⏭ Manche suivante</Btn>
         </div>
+        {gs.screen === 'waiting' && (
+          <div style={{ marginTop:'10px' }}>
+            <Btn onClick={() => emit('admin_launch_intro')} color="#C4620A" full>🎬 Lancer l'intro</Btn>
+          </div>
+        )}
+        {gs.screen === 'game_intro' && (
+          <div style={{ marginTop:'10px' }}>
+            <Btn onClick={() => emit('admin_show_lobby')} color="#00695c" full>▶ Passer au lobby</Btn>
+          </div>
+        )}
         {gs.screen === 'round_intro' && (
           <div style={{ marginTop:'10px' }}>
             <Btn onClick={() => emit('admin_start_round')} color="#00695c" full>▶ Démarrer la manche</Btn>
@@ -803,6 +813,29 @@ export default function Admin() {
     emit('admin_set_background_music', { url });
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const config = JSON.parse(text);
+      const res = await fetch(`${SERVER_URL}/config/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      if (res.ok) {
+        setSavedRounds(false);
+        alert('✅ Config importée !');
+      } else {
+        alert('❌ Erreur lors de l\'import');
+      }
+    } catch {
+      alert('❌ Fichier JSON invalide');
+    }
+    e.target.value = '';
+  };
+
   const saveLobbyMusic = (url) => {
     setLobbyMusicUrl(url);
     emit('admin_set_lobby_music', { url });
@@ -950,24 +983,7 @@ export default function Admin() {
                     color:'white', fontFamily:'var(--font-title)', fontSize:'0.95rem',
                   }}>
                     ⬆ Importer une config
-                    <input type="file" accept=".json" style={{ display:'none' }} onChange={async e => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      try {
-                        const text = await file.text();
-                        const config = JSON.parse(text);
-                        const res = await fetch(`${SERVER_URL}/config/import`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(config),
-                        });
-                        if (res.ok) alert('✅ Config importée !');
-                        else alert('❌ Erreur lors de l\'import');
-                      } catch {
-                        alert('❌ Fichier JSON invalide');
-                      }
-                      e.target.value = '';
-                    }}/>
+                    <input type="file" accept=".json" style={{ display:'none' }} onChange={handleImport}/>
                   </label>
                 </div>
               </div>
