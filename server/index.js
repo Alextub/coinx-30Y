@@ -25,6 +25,46 @@ app.post('/upload', upload.single('image'), (_, res) => {
   res.json({ url: `/uploads/${res.req.file.filename}` });
 });
 
+// ── CONFIG PERSISTENCE ─────────────────────────────────────────────────────────
+const CONFIG_FILE = path.join(__dirname, 'game-config.json');
+const CONFIG_KEYS = ['rounds', 'teamNames', 'teamColors', 'teamPhotos', 'gameName', 'backgroundMusicUrl', 'bgMusicVolume'];
+
+function saveConfig() {
+  const config = {};
+  CONFIG_KEYS.forEach(k => { config[k] = gameState[k]; });
+  fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), () => {});
+}
+
+function loadConfig() {
+  try {
+    if (!fs.existsSync(CONFIG_FILE)) return;
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    CONFIG_KEYS.forEach(k => { if (config[k] !== undefined) gameState[k] = config[k]; });
+    console.log('✅ Config chargée depuis game-config.json');
+  } catch (e) {
+    console.warn('⚠ Impossible de charger game-config.json :', e.message);
+  }
+}
+
+app.get('/config/export', (req, res) => {
+  const config = {};
+  CONFIG_KEYS.forEach(k => { config[k] = gameState[k]; });
+  res.setHeader('Content-Disposition', 'attachment; filename="chalet-quiz-config.json"');
+  res.json(config);
+});
+
+app.post('/config/import', (req, res) => {
+  try {
+    const config = req.body;
+    CONFIG_KEYS.forEach(k => { if (config[k] !== undefined) gameState[k] = config[k]; });
+    saveConfig();
+    io.emit('game_state', gameState);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
@@ -84,6 +124,9 @@ let gameState = {
   gameName: 'CHALET QUIZ',
   videoRound: { phase: 'watching', playing: false },
 };
+
+// Load persisted config immediately after gameState definition
+loadConfig();
 
 let timerInterval = null;
 let mimeInterval = null;
@@ -180,11 +223,13 @@ io.on('connection', (socket) => {
 
   socket.on('admin_set_rounds', (rounds) => {
     gameState.rounds = rounds;
+    saveConfig();
     io.emit('game_state', gameState);
   });
 
   socket.on('admin_set_team_names', ({ team1, team2 }) => {
     gameState.teamNames = { team1, team2 };
+    saveConfig();
     io.emit('game_state', gameState);
   });
 
@@ -193,6 +238,7 @@ io.on('connection', (socket) => {
     if (name) gameState.teamNames[team] = name;
     if (color) gameState.teamColors[team] = color;
     if (photoUrl !== undefined) gameState.teamPhotos[team] = photoUrl;
+    saveConfig();
     io.emit('game_state', gameState);
   });
 
@@ -345,16 +391,19 @@ io.on('connection', (socket) => {
 
   socket.on('admin_set_background_music', ({ url }) => {
     gameState.backgroundMusicUrl = url || '';
+    saveConfig();
     io.emit('game_state', gameState);
   });
 
   socket.on('admin_set_bg_music_volume', ({ volume }) => {
     gameState.bgMusicVolume = Math.max(0, Math.min(1, volume));
+    saveConfig();
     io.emit('game_state', gameState);
   });
 
   socket.on('admin_set_game_name', ({ name }) => {
     gameState.gameName = name || 'CHALET QUIZ';
+    saveConfig();
     io.emit('game_state', gameState);
   });
 

@@ -914,6 +914,47 @@ export default function Admin() {
                 ))}
               </div>
             </Section>
+            <Section title="Export / Import config">
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.5)' }}>
+                  Sauvegarde complète : manches, questions, équipes, musique, nom du jeu.
+                </div>
+                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                  <a
+                    href={`${SERVER_URL}/config/export`}
+                    download="chalet-quiz-config.json"
+                    style={{ textDecoration:'none' }}
+                  >
+                    <Btn color="#1565C0">⬇ Exporter la config</Btn>
+                  </a>
+                  <label style={{
+                    padding:'10px 18px', borderRadius:'6px', cursor:'pointer',
+                    background:'#4a148c', border:'2px solid #7B1FA2',
+                    color:'white', fontFamily:'var(--font-title)', fontSize:'0.95rem',
+                  }}>
+                    ⬆ Importer une config
+                    <input type="file" accept=".json" style={{ display:'none' }} onChange={async e => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      try {
+                        const text = await file.text();
+                        const config = JSON.parse(text);
+                        const res = await fetch(`${SERVER_URL}/config/import`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(config),
+                        });
+                        if (res.ok) alert('✅ Config importée !');
+                        else alert('❌ Erreur lors de l\'import');
+                      } catch {
+                        alert('❌ Fichier JSON invalide');
+                      }
+                      e.target.value = '';
+                    }}/>
+                  </label>
+                </div>
+              </div>
+            </Section>
             <Btn onClick={saveRounds} color="#1b5e20" full>💾 Sauvegarder configuration</Btn>
           </div>
         )}
