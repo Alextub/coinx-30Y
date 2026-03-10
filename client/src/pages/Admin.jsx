@@ -962,17 +962,25 @@ export default function Admin() {
             <Section title="Liens utiles">
               <div style={{ display:'flex', flexDirection:'column', gap:'8px', fontSize:'0.9rem' }}>
                 {[
-                  { label:'🖥 Écran principal', url:'/' },
-                  { label:'📱 Buzzer Équipe 1', url:'/buzzer?team=team1' },
-                  { label:'📱 Buzzer Équipe 2', url:'/buzzer?team=team2' },
-                ].map(l => (
-                  <div key={l.url} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                    <span style={{ color:'rgba(255,255,255,0.6)', minWidth:'200px' }}>{l.label}</span>
-                    <code style={{ background:'rgba(0,0,0,0.4)', padding:'4px 10px', borderRadius:'4px', color:'var(--teal)', fontSize:'0.85rem', flex:1 }}>
-                      {window.location.origin}{l.url}
-                    </code>
-                  </div>
-                ))}
+                  { label:'🖥 Écran principal', hash:'#/' },
+                  { label:`📱 Buzzer ${gs?.teamNames?.team1 || 'Équipe 1'}`, hash:'#/buzzer?team=team1' },
+                  { label:`📱 Buzzer ${gs?.teamNames?.team2 || 'Équipe 2'}`, hash:'#/buzzer?team=team2' },
+                  { label:'⚙️ Admin', hash:'#/admin' },
+                ].map(l => {
+                  const fullUrl = `${window.location.origin}${window.location.pathname}${l.hash}`;
+                  return (
+                    <div key={l.hash} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                      <span style={{ color:'rgba(255,255,255,0.6)', minWidth:'200px' }}>{l.label}</span>
+                      <code
+                        style={{ background:'rgba(0,0,0,0.4)', padding:'4px 10px', borderRadius:'4px', color:'var(--teal)', fontSize:'0.85rem', flex:1, cursor:'pointer', userSelect:'all' }}
+                        title="Cliquer pour copier"
+                        onClick={() => navigator.clipboard?.writeText(fullUrl)}
+                      >
+                        {fullUrl}
+                      </code>
+                    </div>
+                  );
+                })}
               </div>
             </Section>
             <Section title="Export / Import config">
