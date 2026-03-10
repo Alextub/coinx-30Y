@@ -201,7 +201,7 @@ export default function Buzzer() {
 
   // ── Profile setup screen (lobby only) ────────────────────────────────────────
 
-  if (gs?.screen === 'lobby') {
+  if (gs?.screen === 'lobby' || gs?.screen === 'waiting') {
     // Camera open: show viewfinder
     if (cameraOpen) {
       return (
@@ -239,7 +239,9 @@ export default function Buzzer() {
             }
             <div style={{ fontFamily:'var(--font-display)', fontSize:'2.5rem', color:teamColor, letterSpacing:'3px' }}>{profileName || teamName}</div>
             <div style={{ fontFamily:'var(--font-title)', color:'var(--green)', fontSize:'1.2rem', letterSpacing:'3px' }}>✅ PRÊT !</div>
-            <div style={{ fontFamily:'var(--font-body)', color:'rgba(255,255,255,0.4)', fontSize:'0.9rem' }}>En attente du démarrage du jeu...</div>
+            <div style={{ fontFamily:'var(--font-body)', color:'rgba(255,255,255,0.4)', fontSize:'0.9rem' }}>
+              {gs?.screen === 'waiting' ? "En attente du lancement de l'intro..." : "En attente du démarrage du jeu..."}
+            </div>
             <button onClick={() => setProfileSent(false)} style={{ fontFamily:'var(--font-title)', background:'transparent', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', color:'rgba(255,255,255,0.4)', padding:'8px 20px', cursor:'pointer', fontSize:'0.9rem', marginTop:'8px' }}>
               ✏️ Modifier
             </button>
@@ -297,7 +299,7 @@ export default function Buzzer() {
           {/* Color picker */}
           <div style={{ width:'100%' }}>
             <div style={{ fontFamily:'var(--font-title)', color:'rgba(255,255,255,0.6)', fontSize:'0.9rem', marginBottom:'10px', letterSpacing:'2px' }}>COULEUR DE L'ÉQUIPE</div>
-            <div style={{ display:'flex', flexWrap:'wrap', gap:'10px', justifyContent:'center' }}>
+            <div style={{ display:'flex', flexWrap:'nowrap', gap:'6px', justifyContent:'center' }}>
               {COLORS.map(c => {
                 const otherTeam = team === 'team1' ? 'team2' : 'team1';
                 const takenByOther = gs?.teamColors?.[otherTeam] === c;
@@ -309,7 +311,7 @@ export default function Buzzer() {
                     disabled={takenByOther}
                     title={takenByOther ? `Déjà prise par ${gs.teamNames?.[otherTeam]}` : ''}
                     style={{
-                      width:'44px', height:'44px', borderRadius:'50%',
+                      width:'38px', height:'38px', borderRadius:'50%',
                       background: takenByOther ? `${c}44` : c,
                       border: selected ? '4px solid white' : takenByOther ? '3px solid rgba(255,255,255,0.1)' : '3px solid rgba(255,255,255,0.2)',
                       cursor: takenByOther ? 'not-allowed' : 'pointer',
