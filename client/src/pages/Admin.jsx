@@ -351,6 +351,13 @@ function ControlPanel({ gs, emit }) {
 
   // Local state for wager bet (entered before committing to server)
   const [localBet, setLocalBet] = useState(0);
+  const [scoreFlash, setScoreFlash] = useState(null); // { team, pts }
+
+  const addScore = (team, pts) => {
+    emit('admin_add_score', { team, points: pts });
+    setScoreFlash({ team, pts });
+    setTimeout(() => setScoreFlash(sf => sf?.team === team && sf?.pts === pts ? null : sf), 1500);
+  };
   useEffect(() => {
     if (gs.wager?.phase === 'betting') setLocalBet(0);
   }, [gs.wager?.phase, qIdx]);
@@ -775,25 +782,51 @@ function ControlPanel({ gs, emit }) {
 
       {/* Score editing */}
       <Section title="Scores de la manche">
+        {gs.buzzer?.winner && (
+          <div style={{
+            display:'flex', alignItems:'center', gap:'10px',
+            padding:'8px 14px', marginBottom:'10px',
+            background: gs.buzzer.winner==='team1' ? 'rgba(255,45,120,0.2)' : 'rgba(0,229,255,0.15)',
+            border: `2px solid ${gs.buzzer.winner==='team1' ? 'var(--red-bright)' : 'var(--blue-light)'}`,
+            borderRadius:'8px', fontFamily:'var(--font-title)', fontSize:'0.9rem', color:'white',
+            animation:'pulse-glow 1s ease infinite',
+          }}>
+            🔔 {gs.buzzer.winner==='team1'?'🔴':'🔵'} <strong style={{ marginLeft:'4px' }}>{gs.teamNames?.[gs.buzzer.winner]}</strong> a buzzé !
+          </div>
+        )}
         <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
-          {['team1','team2'].map(team => (
-            <div key={team} style={{ flex:1, minWidth:'140px' }}>
-              <div style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color:team==='team1'?'var(--red-bright)':'var(--blue-light)', marginBottom:'2px' }}>
-                {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+          {['team1','team2'].map(team => {
+            const flash = scoreFlash?.team === team;
+            return (
+              <div key={team} style={{ flex:1, minWidth:'140px', position:'relative' }}>
+                <div style={{ fontFamily:'var(--font-title)', fontSize:'0.9rem', color:team==='team1'?'var(--red-bright)':'var(--blue-light)', marginBottom:'2px' }}>
+                  {team==='team1'?'🔴':'🔵'} {gs.teamNames?.[team]}
+                </div>
+                <div style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', marginBottom:'6px' }}>
+                  Manche : <strong style={{ color:'var(--green)' }}>{gs.roundScores?.[team]||0} pts</strong>
+                  {' · '}Total : {gs.scores?.[team]||0} pts
+                </div>
+                {flash && (
+                  <div className="anim-bounce-in" style={{
+                    position:'absolute', top:0, right:0,
+                    background: scoreFlash.pts > 0 ? 'rgba(0,200,83,0.95)' : 'rgba(198,40,40,0.95)',
+                    color:'white', borderRadius:'6px', padding:'3px 10px',
+                    fontFamily:'var(--font-display)', fontSize:'1rem',
+                    pointerEvents:'none', zIndex:10,
+                  }}>
+                    {scoreFlash.pts > 0 ? `+${scoreFlash.pts}` : scoreFlash.pts}
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:'6px' }}>
+                  {[1,2,3,-1].map(pts=>(
+                    <Btn key={pts} small onClick={() => addScore(team, pts)} color={pts<0?'#c62828':'#1b5e20'}>
+                      {pts>0?`+${pts}`:pts}
+                    </Btn>
+                  ))}
+                </div>
               </div>
-              <div style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', marginBottom:'6px' }}>
-                Manche : <strong style={{ color:'var(--green)' }}>{gs.roundScores?.[team]||0} pts</strong>
-                {' · '}Total : {gs.scores?.[team]||0} pts
-              </div>
-              <div style={{ display:'flex', gap:'6px' }}>
-                {[1,2,3,-1].map(pts=>(
-                  <Btn key={pts} small onClick={() => emit('admin_add_score', { team, points:pts })} color={pts<0?'#c62828':'#1b5e20'}>
-                    {pts>0?`+${pts}`:pts}
-                  </Btn>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Section>
     </div>
@@ -810,6 +843,7 @@ export default function Admin() {
   const [bgMusicUrl, setBgMusicUrl] = useState('');
   const [lobbyMusicUrl, setLobbyMusicUrl] = useState('');
   const [gameName, setGameName] = useState('CHALET QUIZ');
+  const [endMusicUrl, setEndMusicUrl] = useState('');
 
   useEffect(() => {
     if (gs?.rounds?.length && !savedRounds) { setRounds(gs.rounds); setSavedRounds(true); }
@@ -817,6 +851,7 @@ export default function Admin() {
     if (gs?.backgroundMusicUrl !== undefined) setBgMusicUrl(gs.backgroundMusicUrl);
     if (gs?.lobbyMusicUrl !== undefined) setLobbyMusicUrl(gs.lobbyMusicUrl);
     if (gs?.gameName) setGameName(gs.gameName);
+    if (gs?.endMusicUrl !== undefined) setEndMusicUrl(gs.endMusicUrl);
   }, [gs]);
 
   const saveBgMusic = (url) => {
@@ -850,6 +885,11 @@ export default function Admin() {
   const saveLobbyMusic = (url) => {
     setLobbyMusicUrl(url);
     emit('admin_set_lobby_music', { url });
+  };
+
+  const saveEndMusic = (url) => {
+    setEndMusicUrl(url);
+    emit('admin_set_end_music', { url });
   };
 
   const saveRounds = () => {
@@ -956,6 +996,17 @@ export default function Admin() {
                 </div>
                 {bgMusicUrl && (
                   <Btn small onClick={() => saveBgMusic('')} color="#c62828">⏹ Arrêter la musique</Btn>
+                )}
+              </div>
+            </Section>
+            <Section title="Musique de fin de partie">
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.4)' }}>
+                  Lancée automatiquement sur l'écran de fin. En boucle.
+                </div>
+                <FileUpload value={endMusicUrl} onChange={saveEndMusic} accept="audio/*" label="🎵 Audio"/>
+                {endMusicUrl && (
+                  <Btn small onClick={() => saveEndMusic('')} color="#c62828">⏹ Retirer</Btn>
                 )}
               </div>
             </Section>

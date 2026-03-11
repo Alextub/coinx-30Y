@@ -153,11 +153,13 @@ function GameIntroScreen({ gs }) {
               <div key={team} style={{
                 display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
                 padding:'20px 36px',
+                minWidth:'200px', width:'clamp(180px,20vw,240px)',
                 background:`${color}22`,
                 border:`3px solid ${color}`,
                 borderRadius:'12px',
                 boxShadow:`0 0 30px ${color}66`,
                 color:'white', fontFamily:'var(--font-title)', fontSize:'1.4rem',
+                textAlign:'center',
               }}>
                 {photo
                   ? <img src={photo} alt="" style={{ width:'72px', height:'72px', borderRadius:'50%', objectFit:'cover', border:`3px solid ${color}` }}/>
@@ -203,11 +205,12 @@ function LobbyScreen({ gs }) {
             <div key={team} style={{
               display:'flex', flexDirection:'column', alignItems:'center', gap:'12px',
               padding:'20px 32px',
+              minWidth:'200px', width:'clamp(180px,20vw,240px)',
               background:`${color}22`,
               border:`3px solid ${color}`,
               borderRadius:'12px',
               boxShadow:`0 0 20px ${color}66`,
-              color:'white',
+              color:'white', textAlign:'center',
             }}>
               {photo
                 ? <img src={photo} alt="" style={{ width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${color}`, boxShadow:`0 0 20px ${color}88` }}/>
@@ -242,7 +245,7 @@ function RoundIntroScreen({ gs, audioUnlocked }) {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !round?.introAudioUrl) return;
-    audio.volume = 0.7;
+    audio.volume = 1.0;
     audio.currentTime = 0;
     audio.load();
     const tryPlay = () => audio.play().catch(() => {});
@@ -373,7 +376,7 @@ function QuestionScreen({ gs }) {
               animation: hit ? 'pulse-glow 1s ease infinite' : 'none',
             }}>
               {tPhoto
-                ? <img src={tPhoto} alt="" style={{ width:'28px', height:'28px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${tColor}` }}/>
+                ? <img src={tPhoto} alt="" style={{ width:'48px', height:'48px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${tColor}` }}/>
                 : <span>{team==='team1'?'🔴':'🔵'}</span>}
               {gs.teamNames?.[team]}
               {hit && ' ✓ BUZZÉ !'}
@@ -1042,40 +1045,124 @@ function VideoRoundScreen({ gs }) {
 }
 
 function EndScreen({ gs }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    setStep(0);
+    const timers = [
+      setTimeout(() => setStep(1), 300),
+      setTimeout(() => setStep(2), 1800),
+      setTimeout(() => setStep(3), 3500),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   const team1 = gs.scores?.team1 || 0;
   const team2 = gs.scores?.team2 || 0;
-  const winner = team1 > team2 ? gs.teamNames?.team1 : team2 > team1 ? gs.teamNames?.team2 : null;
+  const winnerTeam = team1 > team2 ? 'team1' : team2 > team1 ? 'team2' : null;
+  const winnerName = winnerTeam ? gs.teamNames?.[winnerTeam] : null;
+  const winnerColor = winnerTeam ? (gs.teamColors?.[winnerTeam] || (winnerTeam==='team1'?'#FF2D78':'#00E5FF')) : null;
+  const winnerPhoto = winnerTeam ? gs.teamPhotos?.[winnerTeam] : null;
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'32px', position:'relative', zIndex:1, textAlign:'center' }}>
-      <div style={{ fontSize:'6rem' }}>🏔️🎿🏆</div>
-      <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(3rem,8vw,7rem)', color:'var(--yellow)', textShadow:'6px 6px 0 #C4620A, 0 0 60px #FFD600', letterSpacing:'4px' }}>
-        FIN DU JEU !
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:'28px', position:'relative', zIndex:1, textAlign:'center', overflow:'hidden' }}>
+
+      {/* Rayons rotatifs */}
+      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
+        <div style={{
+          width:'250vmax', height:'250vmax',
+          background:'conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.06) 8deg, transparent 16deg, transparent 24deg, rgba(255,140,0,0.04) 32deg, transparent 40deg)',
+          animation: step >= 1 ? 'rays 12s linear infinite' : 'none',
+          transformOrigin:'center',
+          opacity: step >= 1 ? 1 : 0, transition:'opacity 1.5s ease',
+        }}/>
       </div>
-      {winner ? (
-        <>
-          <div style={{ fontFamily:'var(--font-title)', fontSize:'1.4rem', color:'rgba(255,255,255,0.6)' }}>Et le grand vainqueur est...</div>
-          <div className="anim-bounce-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,6rem)', color:'var(--green)', textShadow:'0 0 40px #00C853', letterSpacing:'3px' }}>
-            🥇 {winner} 🥇
+      {/* Halo central */}
+      <div style={{
+        position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+        width:'90vw', height:'90vw', borderRadius:'50%',
+        background:'radial-gradient(circle, rgba(196,98,10,0.18) 0%, rgba(255,215,0,0.08) 40%, transparent 70%)',
+        pointerEvents:'none',
+        opacity: step >= 1 ? 1 : 0, transition:'opacity 2s ease',
+      }}/>
+
+      {/* "FIN DU JEU !" */}
+      {step >= 1 && (
+        <div className="anim-zoom-in" style={{ position:'relative' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, overflow:'hidden', pointerEvents:'none' }}>
+            <div style={{ position:'absolute', top:'-20%', bottom:'-20%', width:'40%', background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation:'shine 1.4s ease 0.2s both' }}/>
           </div>
-        </>
-      ) : (
-        <div style={{ fontFamily:'var(--font-display)', fontSize:'3rem', color:'var(--teal)' }}>🤝 MATCH NUL !</div>
+          <div style={{
+            fontFamily:'var(--font-display)', fontSize:'clamp(4rem,12vw,10rem)',
+            color:'var(--yellow)', letterSpacing:'6px', lineHeight:1,
+            textShadow:'8px 8px 0 #C4620A, 0 0 80px #FFD700, 0 0 160px #FF8C00',
+          }}>FIN DU JEU !</div>
+        </div>
       )}
-      <div style={{ display:'flex', gap:'32px', fontFamily:'var(--font-title)', fontSize:'1.4rem', alignItems:'center' }}>
-        {['team1','team2'].map(team => {
-          const color = gs.teamColors?.[team] || (team==='team1'?'#FF2D78':'#00E5FF');
-          const photo = gs.teamPhotos?.[team];
-          const score = gs.scores?.[team] || 0;
-          return (
-            <span key={team} style={{ color, display:'flex', alignItems:'center', gap:'8px' }}>
-              {photo
-                ? <img src={photo} alt="" style={{ width:'28px', height:'28px', borderRadius:'50%', objectFit:'cover', border:`2px solid ${color}` }}/>
-                : <span>{team==='team1'?'🔴':'🔵'}</span>}
-              {gs.teamNames?.[team]}: {score} pts
-            </span>
-          );
-        })}
+
+      {/* Vainqueur */}
+      {step >= 2 && winnerTeam && (
+        <div className="anim-slide-up" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'16px' }}>
+          <div style={{ fontFamily:'var(--font-title)', fontSize:'clamp(1rem,2.5vw,1.5rem)', color:'rgba(255,255,255,0.6)', letterSpacing:'6px' }}>
+            ET LE GRAND VAINQUEUR EST...
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:'24px' }}>
+            {winnerPhoto
+              ? <img src={winnerPhoto} alt="" style={{ width:'90px', height:'90px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${winnerColor}`, boxShadow:`0 0 40px ${winnerColor}88` }}/>
+              : <span style={{ fontSize:'4.5rem' }}>{winnerTeam==='team1'?'🔴':'🔵'}</span>
+            }
+            <div style={{
+              fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,8vw,7rem)',
+              color: winnerColor, letterSpacing:'4px',
+              textShadow:`0 0 40px ${winnerColor}, 8px 8px 0 rgba(0,0,0,0.4)`,
+              animation:'pulse-glow 1.5s ease infinite',
+            }}>
+              🥇 {winnerName} 🥇
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step >= 2 && !winnerTeam && (
+        <div className="anim-bounce-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(2.5rem,7vw,6rem)', color:'var(--teal)', letterSpacing:'4px', textShadow:'0 0 40px #00E5FF' }}>
+          🤝 MATCH NUL !
+        </div>
+      )}
+
+      {/* Scores finaux */}
+      {step >= 3 && (
+        <div className="anim-slide-up" style={{ display:'flex', gap:'40px', alignItems:'flex-end' }}>
+          {(['team1','team2']).map((team, i) => {
+            const color = gs.teamColors?.[team] || (i===0?'#FF2D78':'#00E5FF');
+            const photo = gs.teamPhotos?.[team];
+            const score = gs.scores?.[team] || 0;
+            const isWinner = team === winnerTeam;
+            return (
+              <div key={team} style={{
+                display:'flex', flexDirection:'column', alignItems:'center', gap:'10px',
+                padding:'24px 36px',
+                minWidth:'200px', width:'clamp(180px,18vw,240px)',
+                background: isWinner ? `${color}22` : 'rgba(0,0,0,0.3)',
+                border:`4px solid ${isWinner ? color : 'rgba(255,255,255,0.2)'}`,
+                borderRadius:'16px',
+                boxShadow: isWinner ? `0 0 60px ${color}88` : 'none',
+              }}>
+                {photo
+                  ? <img src={photo} alt="" style={{ width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', border:`4px solid ${color}`, boxShadow:`0 0 20px ${color}66` }}/>
+                  : <span style={{ fontSize:'3rem' }}>{i===0?'🔴':'🔵'}</span>
+                }
+                <div style={{ fontFamily:'var(--font-title)', color:'rgba(255,255,255,0.7)', fontSize:'1rem' }}>{gs.teamNames?.[team]}</div>
+                <div style={{ fontFamily:'var(--font-display)', fontSize:'clamp(3rem,8vw,7rem)', color, textShadow:`0 0 20px ${color}`, lineHeight:1 }}>{score}</div>
+                {isWinner && <div style={{ fontFamily:'var(--font-title)', color:'var(--yellow)', letterSpacing:'3px', fontSize:'0.9rem', animation:'pulse-glow 1.5s ease infinite' }}>⭐ VAINQUEUR ⭐</div>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Montagnes déco */}
+      <div style={{ position:'absolute', bottom:'4%', left:0, right:0, display:'flex', justifyContent:'center', fontSize:'3rem', opacity:0.1, letterSpacing:'-6px', userSelect:'none', pointerEvents:'none' }}>
+        🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️🏔️
       </div>
     </div>
   );
@@ -1087,6 +1174,7 @@ export default function Display() {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const bgMusicRef = useRef(null);
   const lobbyMusicRef = useRef(null);
+  const endMusicRef = useRef(null);
 
   const unlockAudio = () => {
     getCtx(); // unlock Web Audio context
@@ -1136,6 +1224,18 @@ export default function Display() {
     }
   }, [audioUnlocked, gs?.backgroundMusicUrl, gs?.bgMusicVolume, gs?.screen]);
 
+  // End music: plays only on end screen
+  useEffect(() => {
+    const audio = endMusicRef.current;
+    if (!audio) return;
+    if (audioUnlocked && gs?.endMusicUrl && gs?.screen === 'end') {
+      if (audio.src !== gs.endMusicUrl) { audio.src = gs.endMusicUrl; audio.load(); }
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [audioUnlocked, gs?.endMusicUrl, gs?.screen]);
+
   if (!gs) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-title)', fontSize:'1.5rem', color:'var(--blue-light)' }}>
       <Snow count={20}/>
@@ -1171,6 +1271,7 @@ export default function Display() {
       <div className="fireplace-glow"/>
       <audio ref={bgMusicRef} loop style={{ display:'none' }}/>
       <audio ref={lobbyMusicRef} loop style={{ display:'none' }}/>
+      <audio ref={endMusicRef} loop style={{ display:'none' }}/>
       {showScoreBar && <ScoreBar scores={gs.roundScores} teamNames={gs.teamNames} teamColors={gs.teamColors} teamPhotos={gs.teamPhotos} highlight={gs.buzzer?.winner || gs.timer?.active}/>}
       <div style={{ flex:1, position:'relative', zIndex:1 }}>
         {renderScreen()}
