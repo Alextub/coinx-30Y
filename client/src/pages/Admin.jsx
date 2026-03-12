@@ -221,7 +221,7 @@ function SubRoundEditor({ subRounds, onChange }) {
 }
 
 // ── ROUND EDITOR ───────────────────────────────────────────────────────────────
-function RoundEditor({ rounds, onChange }) {
+function RoundEditor({ rounds, onChange, onSaveComplete }) {
   const [editIdx, setEditIdx] = useState(null);
   const [draft, setDraft] = useState(null);
 
@@ -244,6 +244,7 @@ function RoundEditor({ rounds, onChange }) {
     const next = [...rounds];
     next[editIdx] = draft;
     onChange(next);
+    onSaveComplete?.(next); // auto-save vers le serveur
     setEditIdx(null); setDraft(null);
   };
 
@@ -265,13 +266,13 @@ function RoundEditor({ rounds, onChange }) {
         <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
           <div>
             <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Nom de la manche</label>
-            <Input value={draft.name} onChange={v=>setDraft({...draft,name:v})} placeholder="Nom de la manche"/>
+            <Input value={draft.name} onChange={v=>setDraft(p=>({...p,name:v}))} placeholder="Nom de la manche"/>
           </div>
           <div>
             <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Type</label>
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
               {ROUND_TYPES.map(t => (
-                <button key={t.value} onClick={() => setDraft({...draft,type:t.value})} style={{
+                <button key={t.value} onClick={() => setDraft(p=>({...p,type:t.value}))} style={{
                   padding:'8px 14px', borderRadius:'6px', cursor:'pointer',
                   background: draft.type===t.value ? '#1565C0' : 'rgba(255,255,255,0.05)',
                   border:`2px solid ${draft.type===t.value?'#42A5F5':'rgba(255,255,255,0.1)'}`,
@@ -282,40 +283,40 @@ function RoundEditor({ rounds, onChange }) {
           </div>
           <div>
             <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Description (affichée à l'écran)</label>
-            <Input value={draft.description||''} onChange={v=>setDraft({...draft,description:v})} placeholder="Description optionnelle"/>
+            <Input value={draft.description||''} onChange={v=>setDraft(p=>({...p,description:v}))} placeholder="Description optionnelle"/>
           </div>
           <div>
             <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Musique d'introduction</label>
-            <FileUpload value={draft.introAudioUrl||''} onChange={v=>setDraft({...draft,introAudioUrl:v})} accept="audio/*" label="🎵 Audio"/>
+            <FileUpload value={draft.introAudioUrl||''} onChange={v=>setDraft(p=>({...p,introAudioUrl:v}))} accept="audio/*" label="🎵 Audio"/>
           </div>
           <div style={{ display:'flex', gap:'12px' }}>
             <div style={{ flex:1 }}>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Points par bonne réponse</label>
-              <Input type="number" value={draft.points||1} onChange={v=>setDraft({...draft,points:parseInt(v)||1})} placeholder="1"/>
+              <Input type="number" value={draft.points||1} onChange={v=>setDraft(p=>({...p,points:parseInt(v)||1}))} placeholder="1"/>
             </div>
             {['timer','creative'].includes(draft.type) && (
               <div style={{ flex:1 }}>
                 <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Durée chrono (secondes)</label>
-                <Input type="number" value={draft.timerDuration||60} onChange={v=>setDraft({...draft,timerDuration:parseInt(v)||60})} placeholder="60"/>
+                <Input type="number" value={draft.timerDuration||60} onChange={v=>setDraft(p=>({...p,timerDuration:parseInt(v)||60}))} placeholder="60"/>
               </div>
             )}
           </div>
           {draft.type === 'mime' && (
             <div>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'8px' }}>Sous-manches</label>
-              <SubRoundEditor subRounds={draft.subRounds||[]} onChange={sr=>setDraft({...draft,subRounds:sr})}/>
+              <SubRoundEditor subRounds={draft.subRounds||[]} onChange={sr=>setDraft(p=>({...p,subRounds:sr}))}/>
             </div>
           )}
           {draft.type === 'video' && (
             <div>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px' }}>Fichier vidéo</label>
-              <FileUpload value={draft.videoUrl||''} onChange={v=>setDraft({...draft,videoUrl:v})} accept="video/*" label="🎬 Vidéo"/>
+              <FileUpload value={draft.videoUrl||''} onChange={v=>setDraft(p=>({...p,videoUrl:v}))} accept="video/*" label="🎬 Vidéo"/>
             </div>
           )}
           {!['mime','creative','timer'].includes(draft.type) && (
             <div>
               <label style={{ fontSize:'0.8rem', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'8px' }}>Questions</label>
-              <QuestionEditor questions={draft.questions||[]} onChange={q=>setDraft({...draft,questions:q})} type={draft.type}/>
+              <QuestionEditor questions={draft.questions||[]} onChange={q=>setDraft(p=>({...p,questions:q}))} type={draft.type}/>
             </div>
           )}
         </div>
@@ -871,13 +872,18 @@ export default function Admin() {
         body: JSON.stringify(config),
       });
       if (res.ok) {
-        setSavedRounds(false);
+        // Mise à jour directe — évite la race condition avec le socket game_state
+        if (Array.isArray(config.rounds) && config.rounds.length > 0) {
+          setRounds(config.rounds);
+        }
+        setSavedRounds(true);
         alert('✅ Config importée !');
       } else {
-        alert('❌ Erreur lors de l\'import');
+        const err = await res.json().catch(() => ({}));
+        alert(`❌ Erreur lors de l'import : ${err.error || res.status}`);
       }
-    } catch {
-      alert('❌ Fichier JSON invalide');
+    } catch (e) {
+      alert(`❌ Fichier JSON invalide : ${e.message}`);
     }
     e.target.value = '';
   };
@@ -892,10 +898,11 @@ export default function Admin() {
     emit('admin_set_end_music', { url });
   };
 
-  const saveRounds = () => {
-    emit('admin_set_rounds', rounds);
+  const saveRounds = (overrideRounds) => {
+    const r = overrideRounds ?? rounds;
+    emit('admin_set_rounds', r);
     emit('admin_set_team_names', teamNames);
-    alert('✅ Configuration sauvegardée !');
+    if (!overrideRounds) alert('✅ Configuration sauvegardée !');
   };
 
   const tabs = [
@@ -935,7 +942,7 @@ export default function Admin() {
         {tab === 'setup' && (
           <div>
             <Section title="Manches du jeu">
-              <RoundEditor rounds={rounds} onChange={setRounds}/>
+              <RoundEditor rounds={rounds} onChange={setRounds} onSaveComplete={saveRounds}/>
             </Section>
             <Btn onClick={saveRounds} color="#1b5e20" full>💾 Envoyer au jeu</Btn>
           </div>

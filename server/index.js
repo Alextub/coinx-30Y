@@ -21,33 +21,41 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ── MEDIA STORE : persistance des uploads entre redéploiements ─────────────────
-// Les fichiers uploadés sont sauvegardés en base64 dans media-store.json.
-// À chaque démarrage du serveur, les fichiers manquants sont recréés.
+// Cache en mémoire — lu une seule fois au démarrage, puis mis à jour en place.
+// Évite de relire/réécrire un gros fichier JSON à chaque upload (OOM).
 const MEDIA_STORE_FILE = path.join(__dirname, 'media-store.json');
+let _mediaStore = null;
 
-function loadMediaStore() {
-  try { return JSON.parse(fs.readFileSync(MEDIA_STORE_FILE, 'utf8')); }
-  catch { return {}; }
+function getMediaStore() {
+  if (_mediaStore === null) {
+    try { _mediaStore = JSON.parse(fs.readFileSync(MEDIA_STORE_FILE, 'utf8')); }
+    catch { _mediaStore = {}; }
+  }
+  return _mediaStore;
 }
 
 function saveToMediaStore(filename, b64, mime) {
-  const store = loadMediaStore();
+  const store = getMediaStore(); // uses in-memory cache, no disk read
   store[filename] = { b64, mime };
-  fs.writeFile(MEDIA_STORE_FILE, JSON.stringify(store), () => {});
+  fs.writeFile(MEDIA_STORE_FILE, JSON.stringify(store), (e) => {
+    if (e) console.warn('⚠ media-store write error:', e.message);
+  });
 }
 
 function restoreMediaFiles() {
   try {
-    const store = loadMediaStore();
+    const store = getMediaStore();
     let restored = 0;
-    for (const [filename, { b64, mime }] of Object.entries(store)) {
+    for (const [filename, entry] of Object.entries(store)) {
+      const { b64 } = entry || {};
+      if (!b64) continue;
       const filepath = path.join(uploadsDir, filename);
       if (!fs.existsSync(filepath)) {
         fs.writeFileSync(filepath, Buffer.from(b64, 'base64'));
         restored++;
       }
     }
-    if (restored > 0) console.log(`✅ ${restored} fichier(s) média restauré(s) depuis media-store.json`);
+    if (restored > 0) console.log(`✅ ${restored} fichier(s) média restauré(s)`);
   } catch (e) {
     console.warn('⚠ Restauration média échouée :', e.message);
   }
