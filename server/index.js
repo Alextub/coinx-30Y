@@ -8,7 +8,7 @@ const fs = require('fs');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '60mb' })); // import config potentiellement volumineux
 
 // ── FILE UPLOADS ───────────────────────────────────────────────────────────────
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -20,22 +20,52 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// ── MEDIA STORE : persistance des uploads entre redéploiements ─────────────────
+// Les fichiers uploadés sont sauvegardés en base64 dans media-store.json.
+// À chaque démarrage du serveur, les fichiers manquants sont recréés.
+const MEDIA_STORE_FILE = path.join(__dirname, 'media-store.json');
+
+function loadMediaStore() {
+  try { return JSON.parse(fs.readFileSync(MEDIA_STORE_FILE, 'utf8')); }
+  catch { return {}; }
+}
+
+function saveToMediaStore(filename, b64, mime) {
+  const store = loadMediaStore();
+  store[filename] = { b64, mime };
+  fs.writeFile(MEDIA_STORE_FILE, JSON.stringify(store), () => {});
+}
+
+function restoreMediaFiles() {
+  try {
+    const store = loadMediaStore();
+    let restored = 0;
+    for (const [filename, { b64, mime }] of Object.entries(store)) {
+      const filepath = path.join(uploadsDir, filename);
+      if (!fs.existsSync(filepath)) {
+        fs.writeFileSync(filepath, Buffer.from(b64, 'base64'));
+        restored++;
+      }
+    }
+    if (restored > 0) console.log(`✅ ${restored} fichier(s) média restauré(s) depuis media-store.json`);
+  } catch (e) {
+    console.warn('⚠ Restauration média échouée :', e.message);
+  }
+}
+
+// Restaurer les fichiers dès le démarrage (avant de servir les uploads)
+restoreMediaFiles();
+
 app.use('/uploads', express.static(uploadsDir));
 app.post('/upload', upload.single('image'), (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'No file' });
-  // Vidéo : trop lourd pour base64, on garde le filesystem
-  if (file.mimetype.startsWith('video/')) {
-    return res.json({ url: `/uploads/${file.filename}` });
-  }
-  // Audio et images : encodés en base64 data URL (durable, indépendant du filesystem)
+  // Sauvegarder dans le media-store pour survivre aux redéploiements
   try {
     const b64 = fs.readFileSync(file.path).toString('base64');
-    fs.unlink(file.path, () => {}); // nettoyage du fichier temporaire
-    res.json({ url: `data:${file.mimetype};base64,${b64}` });
-  } catch (e) {
-    res.json({ url: `/uploads/${file.filename}` });
-  }
+    saveToMediaStore(file.filename, b64, file.mimetype);
+  } catch (e) {}
+  res.json({ url: `/uploads/${file.filename}` });
 });
 
 // ── CONFIG PERSISTENCE ─────────────────────────────────────────────────────────
@@ -48,11 +78,29 @@ function saveConfig() {
   fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), () => {});
 }
 
+// Nettoie les data URLs base64 qui ne doivent pas traîner dans gameState
+function stripBase64FromRounds(rounds) {
+  if (!Array.isArray(rounds)) return rounds;
+  return rounds.map(r => ({
+    ...r,
+    introAudioUrl: r.introAudioUrl?.startsWith('data:') ? '' : (r.introAudioUrl || ''),
+    questions: (r.questions || []).map(q => ({
+      ...q,
+      audioUrl: q.audioUrl?.startsWith('data:') ? '' : (q.audioUrl || ''),
+      imageUrl: q.imageUrl?.startsWith('data:') ? '' : (q.imageUrl || ''),
+      proofImageUrl: q.proofImageUrl?.startsWith('data:') ? '' : (q.proofImageUrl || ''),
+    })),
+  }));
+}
+
 function loadConfig() {
   try {
     if (!fs.existsSync(CONFIG_FILE)) return;
-    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
+    const config = JSON.parse(raw);
     CONFIG_KEYS.forEach(k => { if (config[k] !== undefined) gameState[k] = config[k]; });
+    // Nettoyer les résidus base64 du commit défectueux
+    gameState.rounds = stripBase64FromRounds(gameState.rounds);
     console.log('✅ Config chargée depuis game-config.json');
   } catch (e) {
     console.warn('⚠ Impossible de charger game-config.json :', e.message);
@@ -70,6 +118,7 @@ app.post('/config/import', (req, res) => {
   try {
     const config = req.body;
     CONFIG_KEYS.forEach(k => { if (config[k] !== undefined) gameState[k] = config[k]; });
+    gameState.rounds = stripBase64FromRounds(gameState.rounds);
     saveConfig();
     io.emit('game_state', gameState);
     res.json({ ok: true });

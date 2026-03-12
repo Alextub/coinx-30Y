@@ -71,7 +71,7 @@ function FileUpload({ value, onChange, accept, label }) {
       fd.append('image', file);
       const res = await fetch(`${SERVER_URL}/upload`, { method:'POST', body:fd });
       const data = await res.json();
-      onChange(data.url.startsWith('data:') ? data.url : SERVER_URL + data.url);
+      onChange(SERVER_URL + data.url);
     } catch {
       alert('Erreur lors de l\'upload');
     } finally {
