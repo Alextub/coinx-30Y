@@ -21,8 +21,21 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.use('/uploads', express.static(uploadsDir));
-app.post('/upload', upload.single('image'), (_, res) => {
-  res.json({ url: `/uploads/${res.req.file.filename}` });
+app.post('/upload', upload.single('image'), (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: 'No file' });
+  // Vidéo : trop lourd pour base64, on garde le filesystem
+  if (file.mimetype.startsWith('video/')) {
+    return res.json({ url: `/uploads/${file.filename}` });
+  }
+  // Audio et images : encodés en base64 data URL (durable, indépendant du filesystem)
+  try {
+    const b64 = fs.readFileSync(file.path).toString('base64');
+    fs.unlink(file.path, () => {}); // nettoyage du fichier temporaire
+    res.json({ url: `data:${file.mimetype};base64,${b64}` });
+  } catch (e) {
+    res.json({ url: `/uploads/${file.filename}` });
+  }
 });
 
 // ── CONFIG PERSISTENCE ─────────────────────────────────────────────────────────
@@ -67,7 +80,8 @@ app.post('/config/import', (req, res) => {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  maxHttpBufferSize: 50 * 1024 * 1024, // 50 MB — pour les data URLs audio/image
 });
 
 // ── GAME STATE ────────────────────────────────────────────────────────────────

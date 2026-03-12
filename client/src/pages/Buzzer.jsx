@@ -148,7 +148,7 @@ export default function Buzzer() {
         fd.append('image', blob, 'selfie.jpg');
         const res = await fetch(`${SERVER_URL}/upload`, { method: 'POST', body: fd });
         const data = await res.json();
-        photoUrl = `${SERVER_URL}${data.url}`;
+        photoUrl = data.url.startsWith('data:') ? data.url : `${SERVER_URL}${data.url}`;
       }
       emit('team_set_profile', { team, name: profileName.trim() || undefined, color: profileColor, photoUrl });
       setProfileSent(true);
