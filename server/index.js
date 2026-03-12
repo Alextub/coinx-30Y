@@ -20,59 +20,46 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ── MEDIA STORE : persistance des uploads entre redéploiements ─────────────────
-// Cache en mémoire — lu une seule fois au démarrage, puis mis à jour en place.
-// Évite de relire/réécrire un gros fichier JSON à chaque upload (OOM).
-const MEDIA_STORE_FILE = path.join(__dirname, 'media-store.json');
-let _mediaStore = null;
+// ── MEDIA BACKUP : persistance des uploads entre redéploiements ────────────────
+// Chaque fichier uploadé est copié tel quel dans media-backup/ (binaire brut,
+// pas de base64, pas de JSON → zéro OOM). Au démarrage, les fichiers manquants
+// sont recopiés depuis le backup vers uploads/.
+const mediaBackupDir = path.join(__dirname, 'media-backup');
+if (!fs.existsSync(mediaBackupDir)) fs.mkdirSync(mediaBackupDir);
 
-function getMediaStore() {
-  if (_mediaStore === null) {
-    try { _mediaStore = JSON.parse(fs.readFileSync(MEDIA_STORE_FILE, 'utf8')); }
-    catch { _mediaStore = {}; }
-  }
-  return _mediaStore;
-}
-
-function saveToMediaStore(filename, b64, mime) {
-  const store = getMediaStore(); // uses in-memory cache, no disk read
-  store[filename] = { b64, mime };
-  fs.writeFile(MEDIA_STORE_FILE, JSON.stringify(store), (e) => {
-    if (e) console.warn('⚠ media-store write error:', e.message);
+function backupMediaFile(filename) {
+  const src = path.join(uploadsDir, filename);
+  const dst = path.join(mediaBackupDir, filename);
+  fs.copyFile(src, dst, (e) => {
+    if (e) console.warn('⚠ backup échoué pour', filename, ':', e.message);
+    else console.log('📦 backup:', filename);
   });
 }
 
 function restoreMediaFiles() {
   try {
-    const store = getMediaStore();
+    const files = fs.readdirSync(mediaBackupDir);
     let restored = 0;
-    for (const [filename, entry] of Object.entries(store)) {
-      const { b64 } = entry || {};
-      if (!b64) continue;
-      const filepath = path.join(uploadsDir, filename);
-      if (!fs.existsSync(filepath)) {
-        fs.writeFileSync(filepath, Buffer.from(b64, 'base64'));
+    for (const filename of files) {
+      const dst = path.join(uploadsDir, filename);
+      if (!fs.existsSync(dst)) {
+        fs.copyFileSync(path.join(mediaBackupDir, filename), dst);
         restored++;
       }
     }
-    if (restored > 0) console.log(`✅ ${restored} fichier(s) média restauré(s)`);
+    if (restored > 0) console.log(`✅ ${restored} fichier(s) restauré(s) depuis media-backup/`);
   } catch (e) {
     console.warn('⚠ Restauration média échouée :', e.message);
   }
 }
 
-// Restaurer les fichiers dès le démarrage (avant de servir les uploads)
 restoreMediaFiles();
 
 app.use('/uploads', express.static(uploadsDir));
 app.post('/upload', upload.single('image'), (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'No file' });
-  // Sauvegarder dans le media-store pour survivre aux redéploiements
-  try {
-    const b64 = fs.readFileSync(file.path).toString('base64');
-    saveToMediaStore(file.filename, b64, file.mimetype);
-  } catch (e) {}
+  backupMediaFile(file.filename); // copie binaire → pas d'OOM
   res.json({ url: `/uploads/${file.filename}` });
 });
 
