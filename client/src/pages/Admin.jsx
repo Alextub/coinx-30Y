@@ -834,6 +834,143 @@ function ControlPanel({ gs, emit }) {
   );
 }
 
+// ── THEMES PANEL ───────────────────────────────────────────────────────────────
+const THEME_CSS_VARS = [
+  { key:'--sky',           label:'Fond principal',    group:'Backgrounds' },
+  { key:'--sky2',          label:'Fond secondaire',   group:'Backgrounds' },
+  { key:'--blue',          label:'Bleu',              group:'Couleurs' },
+  { key:'--blue-light',    label:'Bleu clair / néon', group:'Couleurs' },
+  { key:'--red',           label:'Rouge',             group:'Couleurs' },
+  { key:'--red-bright',    label:'Rouge vif',         group:'Couleurs' },
+  { key:'--yellow',        label:'Jaune / or',        group:'Couleurs' },
+  { key:'--yellow-bright', label:'Jaune vif',         group:'Couleurs' },
+  { key:'--green',         label:'Vert',              group:'Couleurs' },
+  { key:'--purple',        label:'Violet',            group:'Couleurs' },
+  { key:'--orange',        label:'Orange',            group:'Couleurs' },
+  { key:'--teal',          label:'Cyan',              group:'Couleurs' },
+  { key:'--white',         label:'Texte principal',   group:'Surfaces' },
+  { key:'--snow',          label:'Neige / reflets',   group:'Surfaces' },
+  { key:'--ember',         label:'Braise / lueur',    group:'Surfaces' },
+  { key:'--wood-panel',    label:'Surface panneaux',  group:'Surfaces' },
+];
+
+const EMPTY_THEME = {
+  id: '',
+  name: '',
+  description: '',
+  backgroundStyle: 'dark',
+  cssVars: Object.fromEntries(THEME_CSS_VARS.map(v => [v.key, '#000000'])),
+};
+
+function ThemesPanel({ gs, emit, editingTheme, setEditingTheme }) {
+  const themes = gs?.themes || [];
+  const activeThemeId = gs?.activeThemeId || 'chalet';
+
+  const startNew = () => setEditingTheme({ ...EMPTY_THEME, id: `theme_${Date.now()}`, cssVars: { ...EMPTY_THEME.cssVars } });
+  const startEdit = (t) => setEditingTheme({ ...t, cssVars: { ...t.cssVars } });
+  const cancelEdit = () => setEditingTheme(null);
+
+  const saveTheme = () => {
+    if (!editingTheme?.name?.trim()) return alert('Donne un nom au thème.');
+    emit('admin_save_theme', editingTheme);
+    setEditingTheme(null);
+  };
+
+  const deleteTheme = (themeId) => {
+    if (themeId === 'chalet') return alert('Le thème Chalet est protégé.');
+    if (!confirm('Supprimer ce thème ?')) return;
+    emit('admin_delete_theme', { themeId });
+  };
+
+  if (editingTheme) {
+    const setVar = (key, val) => setEditingTheme(t => ({ ...t, cssVars: { ...t.cssVars, [key]: val } }));
+    const groups = [...new Set(THEME_CSS_VARS.map(v => v.group))];
+    return (
+      <div>
+        <div style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'16px' }}>
+          <Btn small onClick={cancelEdit} color="#555">← Retour</Btn>
+          <span style={{ fontFamily:'var(--font-title)', fontSize:'1rem', color:'rgba(255,255,255,0.6)' }}>
+            {editingTheme.name || 'Nouveau thème'}
+          </span>
+        </div>
+        <Section title="Identité">
+          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            <Input value={editingTheme.name} onChange={v => setEditingTheme(t => ({...t, name:v}))} placeholder="Nom du thème"/>
+            <Input value={editingTheme.description} onChange={v => setEditingTheme(t => ({...t, description:v}))} placeholder="Description courte"/>
+            <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+              <span style={{ fontFamily:'var(--font-title)', fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>Décor de fond :</span>
+              {['chalet','dark'].map(style => (
+                <button key={style} onClick={() => setEditingTheme(t => ({...t, backgroundStyle:style}))} style={{
+                  padding:'6px 14px', borderRadius:'6px', cursor:'pointer', fontFamily:'var(--font-title)', fontSize:'0.85rem',
+                  background: editingTheme.backgroundStyle === style ? '#1565C0' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${editingTheme.backgroundStyle === style ? '#42A5F5' : 'rgba(255,255,255,0.15)'}`,
+                  color:'white',
+                }}>
+                  {style === 'chalet' ? '❄️ Chalet (neige + montagne)' : '🌑 Sombre (sans décor)'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Section>
+        {groups.map(group => (
+          <Section key={group} title={group}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px,1fr))', gap:'10px' }}>
+              {THEME_CSS_VARS.filter(v => v.group === group).map(v => (
+                <div key={v.key} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                  <input type="color" value={editingTheme.cssVars[v.key] || '#000000'}
+                    onChange={e => setVar(v.key, e.target.value)}
+                    style={{ width:'36px', height:'36px', border:'none', borderRadius:'4px', cursor:'pointer', background:'none' }}
+                  />
+                  <span style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'rgba(255,255,255,0.7)' }}>{v.label}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        ))}
+        <Btn onClick={saveTheme} color="#1b5e20" full>💾 Sauvegarder le thème</Btn>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Section title="Thèmes disponibles">
+        <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginBottom:'12px' }}>
+          {themes.map(t => (
+            <div key={t.id} style={{
+              display:'flex', alignItems:'center', gap:'10px', padding:'12px',
+              background: t.id === activeThemeId ? 'rgba(21,101,192,0.2)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${t.id === activeThemeId ? '#42A5F5' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius:'8px',
+            }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontFamily:'var(--font-title)', fontSize:'0.95rem', color:'white' }}>{t.name}</div>
+                {t.description && <div style={{ fontSize:'0.78rem', color:'rgba(255,255,255,0.45)', marginTop:'2px' }}>{t.description}</div>}
+                <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.3)', marginTop:'2px' }}>
+                  {t.backgroundStyle === 'chalet' ? '❄️ Chalet' : '🌑 Sombre'} — {Object.keys(t.cssVars || {}).length} variables
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:'4px' }}>
+                {t.id !== activeThemeId && (
+                  <Btn small onClick={() => emit('admin_set_active_theme', { themeId: t.id })} color="#1b5e20">✅ Activer</Btn>
+                )}
+                {t.id === activeThemeId && (
+                  <span style={{ fontFamily:'var(--font-title)', fontSize:'0.8rem', color:'#42A5F5', padding:'6px 8px' }}>Actif</span>
+                )}
+                <Btn small onClick={() => startEdit(t)} color="#555">✏️</Btn>
+                {t.id !== 'chalet' && (
+                  <Btn small onClick={() => deleteTheme(t.id)} color="#c62828">🗑</Btn>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <Btn onClick={startNew} color="#4a148c" full>➕ Créer un nouveau thème</Btn>
+      </Section>
+    </div>
+  );
+}
+
 // ── MAIN ADMIN ─────────────────────────────────────────────────────────────────
 export default function Admin() {
   const { gameState: gs, emit, connected } = useSocket();
@@ -845,6 +982,7 @@ export default function Admin() {
   const [lobbyMusicUrl, setLobbyMusicUrl] = useState('');
   const [gameName, setGameName] = useState('CHALET QUIZ');
   const [endMusicUrl, setEndMusicUrl] = useState('');
+  const [editingTheme, setEditingTheme] = useState(null); // null | theme object
 
   useEffect(() => {
     if (gs?.rounds?.length && !savedRounds) { setRounds(gs.rounds); setSavedRounds(true); }
@@ -909,6 +1047,7 @@ export default function Admin() {
     { id:'control', label:'🎮 Contrôle' },
     { id:'setup', label:'📝 Manches' },
     { id:'config', label:'⚙️ Config' },
+    { id:'themes', label:'🎨 Thèmes' },
   ];
 
   return (
@@ -1067,6 +1206,10 @@ export default function Admin() {
             </Section>
             <Btn onClick={saveRounds} color="#1b5e20" full>💾 Sauvegarder configuration</Btn>
           </div>
+        )}
+
+        {tab === 'themes' && (
+          <ThemesPanel gs={gs} emit={emit} editingTheme={editingTheme} setEditingTheme={setEditingTheme}/>
         )}
 
       </div>

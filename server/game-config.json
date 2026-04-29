@@ -7,58 +7,68 @@
       "questions": [
         {
           "question": "",
-          "imageUrl": "https://drive.google.com/open?id=1qo0o7K2pmQYl9pfBRcRNchkmyihlDyEf&usp=drive_copy",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340542140-1.png",
           "names": [
             "Charlotte",
             "Hanna",
             "Coinx",
             "Jérôme"
-          ]
+          ],
+          "audioUrl": "",
+          "proofImageUrl": ""
         },
         {
           "question": "",
-          "imageUrl": "https://drive.google.com/open?id=1pHw8N7UHjmMf_3uLkZHYfXxzADstiVsA&usp=drive_copy",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340764848-2.png",
           "names": [
             "Nath",
             "Judith",
             "Sacha",
             "Gab"
-          ]
+          ],
+          "audioUrl": "",
+          "proofImageUrl": ""
         },
         {
           "question": "",
-          "imageUrl": "https://drive.google.com/open?id=1fDKvTeFT40o_iVPGrGmftckM4jIfdIPe&usp=drive_copy",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340767968-3.png",
           "names": [
             "Tub",
             "Léna",
             "Yoni",
             "Inès"
-          ]
+          ],
+          "audioUrl": "",
+          "proofImageUrl": ""
         },
         {
           "question": "",
-          "imageUrl": "https://drive.google.com/open?id=1bjkyk4KLoVcPuUFzFXXHhx1vm7QZuid2&usp=drive_copy",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340772803-4.png",
           "names": [
             "Inès",
             "Fanny",
             "Jérôme",
             "Dan"
-          ]
+          ],
+          "audioUrl": "",
+          "proofImageUrl": ""
         },
         {
           "question": "",
-          "imageUrl": "https://drive.google.com/open?id=1GjvoP3dIpFlgdk7BCIFJg_pAVA-G-KiX&usp=drive_copy",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340776289-5.png",
           "names": [
             "Gab",
             "Sacha",
             "Judith",
             "Coinx"
-          ]
+          ],
+          "audioUrl": "",
+          "proofImageUrl": ""
         }
       ],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1VIJ9w-wNPmmGwvM4QtgqspqoO9pvcD6G&usp=drive_copy"
+      "introAudioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340533867-1. Messeki.m4a"
     },
     {
       "name": "Hit the road Jacques",
@@ -66,93 +76,167 @@
       "description": "Jacques a dit \"Trouvez les chansons\". Écoutez Jacques.",
       "questions": [
         {
-          "audioUrl": "https://drive.google.com/open?id=1qhOmka0TrQ-8ceHxjLaPFNRMfgYt506Y&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340562653-K-Maro Femme Like You (Official HD).mp3",
           "question": "K-Maro",
-          "answer": "Femme Like U"
+          "answer": "Femme Like U",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1gyRgIrzeCBQGNCct6UYLUzI9Ypi_J7ud&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340804219-Charles Aznavour La boheÌme Official Lyrics Video.mp3",
           "question": "Charles Aznavour",
-          "answer": "La Bohème"
+          "answer": "La Bohème",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1ZAYBIW74u2TX-NTDCxBgz1aOQqy2TMoZ&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340808467-Manau La tribu de Dana Clip Officiel remasteriseÌ.mp3",
           "question": "Manau",
-          "answer": "La Tribu de Dana"
+          "answer": "La Tribu de Dana",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1drZDEI8J9BfXQJejCXgDgbgUxrUK-wvH&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340812636-BeyonceÌ - Crazy In Love ft. JAY Z.mp3",
           "question": "Beyonce",
-          "answer": "Crazy in Love"
+          "answer": "Crazy in Love",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1AQGVU-jCviD5I3xD_3rGe2myDHlNR8Dw&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340819546-PSY - GANGNAM STYLE(áá¡á¼áá¡á·áá³áá¡ááµá¯) MV.mp3",
           "question": "PSY",
-          "answer": "Gangnam Style"
+          "answer": "Gangnam Style",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1Cndtss97L6-RRWlmrPGye4DQwpPx07Ga&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340824210-TrageÌdie - Hey Oh (Clip Officiel).mp3",
           "question": "Tragédie",
-          "answer": "Hey Oh"
+          "answer": "Hey Oh",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1TsGiG3aYFegjUnY1CMmtQXijHp1MAioq&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340827732-Gipsy Kings - BamboleÌo (Audio).mp3",
           "question": "Gipsy Kings",
-          "answer": "Bamboléo "
+          "answer": "Bamboléo ",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1IoKmk8oxkNwCU78RM2cdoL13GKlQvDWm&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340831931-Desireless - Voyage Voyage (Official HD Video).mp3",
           "question": "Desireless",
-          "answer": "Voyage voyage"
+          "answer": "Voyage voyage",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1pLuH4E544678sHNMgLCtJR49tBBgmkvR&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340836675-AngeÌle -  balance ton quoi (LYRICS).mp3",
           "question": "Angèle",
-          "answer": "Balance ton quoi"
+          "answer": "Balance ton quoi",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1MLVua76yoU-GxJyAdhwRwQg4Zh9reajU&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340840815-Rihanna - Russian Roulette Lyrics.mp3",
           "question": "Rihanna",
-          "answer": "Russian Roulette"
+          "answer": "Russian Roulette",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1_D30JlBwC3KAvpC14_41Z0GB7ohxHlNl&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340844852-Diam's - La boulette (Paroles_Lyrics).mp3",
           "question": "Diam's",
-          "answer": "La boulette"
+          "answer": "La boulette",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1mBE6K60TwpcKQjYR2aDSmtlVCScIC7SQ&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340848197-Justin Timberlake - SexyBack (Lyrics) ft. Timbaland.mp3",
           "question": "Justin Timberlake",
-          "answer": "SexyBack"
+          "answer": "SexyBack",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1Ma043QufFY32WmjAT4dK4FSlGKAmajFz&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773341392118-MyleÌne Farmer - DeÌsenchanteÌe - HD.mp3",
           "question": "Mylène Farmer",
-          "answer": "Désenchantée "
+          "answer": "Désenchantée ",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1Ma043QufFY32WmjAT4dK4FSlGKAmajFz&usp=drive_copy https://drive.google.com/open?id=1TywVSG6Yj2jPdfOzHZZ1g8OMEr2yqSdt&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773341399847-ABBA - Dancing Queen (Official Music Video).mp3",
           "question": "ABBA",
-          "answer": "Dancing Queen"
+          "answer": "Dancing Queen",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
-          "audioUrl": "https://drive.google.com/open?id=1A5fKe-p_IuXJPVejDvLAKBnIEOY_LfnV&usp=drive_copy",
+          "audioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773341404431-Louane - Avenir (Clip officiel).mp3",
           "question": "Louane",
-          "answer": "Avenir"
+          "answer": "Avenir",
+          "imageUrl": "",
+          "proofImageUrl": ""
         }
       ],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1X9KzX7VmCoRpLr3hGNX185W4pr4DvaVp&usp=drive_copy"
+      "introAudioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340555662-2. Hit the road Jacques.m4a"
     },
     {
       "name": "Le Grand Rex",
       "type": "video",
       "description": "Regardez la vidéo, interro surprise !",
-      "questions": [],
+      "questions": [
+        {
+          "question": "Quels chiffres sont inscrits sur le tableau ?",
+          "answer": "4-4-2",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        },
+        {
+          "question": "Quel pourcentage de réduction est proposé à Mme Pichod ?",
+          "answer": "25%",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        },
+        {
+          "question": "De quelle couleur est le fil du casque ?",
+          "answer": "Rouge",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        },
+        {
+          "question": "Comment s'appelle l'interlocutrice à l'autre bout du fil ?",
+          "answer": "Clarisse",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        },
+        {
+          "question": "Que signifie le I de Pichod ?",
+          "answer": "Inifinite Incantatem (tu sais le sort)",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        },
+        {
+          "question": "Combien de fois le nom de Mme Pichod ?",
+          "answer": "7 fois",
+          "proofImageUrl": "",
+          "audioUrl": "",
+          "imageUrl": ""
+        }
+      ],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1XAo5RvBzMAoQ2xkU_gglGMLp5wIB5ro_&usp=drive_copy"
+      "introAudioUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340579240-3. Fox.m4a",
+      "videoUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340588433-WhatsApp Video 2026-03-11 at 18.53.56.mp4"
     },
     {
       "name": "What's my name?",
@@ -160,14 +244,16 @@
       "description": "Alala l'IA. On aura plus de travail mais qu'est-ce qu'on a ri.",
       "questions": [
         {
-          "question": "",
-          "answer": "",
-          "imageUrl": ""
+          "question": "Qui est-ce ?",
+          "answer": "J'ai remis la table",
+          "imageUrl": "https://coinx-30y-production.up.railway.app/uploads/1773340629247-J'ai remis la table.png",
+          "audioUrl": "",
+          "proofImageUrl": ""
         }
       ],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1fDPwK6fabH4dP35ST6RaIt9zxLd6oWxd&usp=drive_copy"
+      "introAudioUrl": ""
     },
     {
       "name": "L’heure du TIC-TAC a sonné 🎉",
@@ -176,7 +262,7 @@
       "questions": [],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1kz-SeWxZXvk59CQqujV42jfbobcxd3r4&usp=drive_copy"
+      "introAudioUrl": ""
     },
     {
       "name": "Mimet c'est gagné",
@@ -185,7 +271,7 @@
       "questions": [],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1ABIaen1AA6zrNZ3f2qeNEPOoKc_2luKU&usp=drive_copy",
+      "introAudioUrl": "",
       "subRounds": [
         {
           "label": "Manche solo #1",
@@ -222,66 +308,96 @@
           "theme": "Histoire",
           "question": "À 5 près, de quand date la dernière exécution par pendaison en France ?",
           "answer": "1977",
-          "team": "team1"
+          "team": "team1",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Sciences",
           "question": "Quels éléments chimiques se trouvent dans le mot suivant : Co-I-N-Cs ?",
           "answer": "Cobalt + Iode + Azote + Césium",
-          "team": "team2"
+          "team": "team2",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Gastronomie",
           "question": "Dans les courses, combien avons-nous commmandé de saveurs de chips différentes ? ",
           "answer": "9",
-          "team": "team1"
+          "team": "team1",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Religion",
           "question": "Dans la Hagada de Pessah, combien de fois dit-on Dayenou ? ",
           "answer": "15 fois",
-          "team": "team2"
+          "team": "team2",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Cinéma",
           "question": "Combien y a-t-il de films James Bond au total ? ",
           "answer": "25",
-          "team": "team1"
+          "team": "team1",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Littérature",
           "question": "Dans la saga Harry Potter, comment s'appelle la soeur d'Albus Dumbledore ?",
           "answer": "Ariana Dumbledore",
-          "team": "team2"
+          "team": "team2",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Sport",
           "question": "Comment s'appelle la copine du footballeur américain Travis Kelce ? ",
           "answer": "Taylor Swift",
-          "team": "team1"
+          "team": "team1",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Géographie",
           "question": "Quel pays possède le plus de fuseaux horaires au monde ? ",
           "answer": "France (13)",
-          "team": "team2"
+          "team": "team2",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Politique",
           "question": "Combien y a-t-il eu de 1er ministres sous la présidence d'Emmanuel Macron ? ",
           "answer": "7",
-          "team": "team1"
+          "team": "team1",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         },
         {
           "theme": "Coinx",
           "question": "À 5 près, combien de followers Coinx possède-t-il sur Instagram ?",
           "answer": "190",
-          "team": "team2"
+          "team": "team2",
+          "audioUrl": "",
+          "imageUrl": "",
+          "proofImageUrl": ""
         }
       ],
       "timerDuration": 60,
       "points": 1,
-      "introAudioUrl": "https://drive.google.com/open?id=1ebJQz0S2P_r07SXLGVeIdGIJEMI3AbZa&usp=drive_copy"
+      "introAudioUrl": ""
     }
   ],
   "teamNames": {
@@ -299,5 +415,95 @@
   "gameName": "Au Coinx du feu",
   "backgroundMusicUrl": "https://drive.google.com/open?id=1oRNn0N1ER2lw9jO2kfgajZ6SQiePNYal&usp=drive_copy",
   "bgMusicVolume": 0.05,
-  "lobbyMusicUrl": "http://localhost:3001/uploads/1773178333787-Van Halen - Jump.mp3"
+  "lobbyMusicUrl": "http://localhost:3001/uploads/1773178333787-Van Halen - Jump.mp3",
+  "endMusicUrl": "",
+  "themes": [
+    {
+      "id": "chalet",
+      "name": "Chalet Montagne",
+      "description": "Bois, neige et feu de cheminée",
+      "backgroundStyle": "chalet",
+      "cssVars": {
+        "--sky": "#160D08",
+        "--sky2": "#2A1810",
+        "--blue": "#1565C0",
+        "--blue-light": "#00E5FF",
+        "--red": "#E53935",
+        "--red-bright": "#FF2D78",
+        "--yellow": "#FFD700",
+        "--yellow-bright": "#FFEA00",
+        "--green": "#00C853",
+        "--white": "#F5F0E8",
+        "--snow": "#F5F0E8",
+        "--purple": "#7B1FA2",
+        "--orange": "#FF8C00",
+        "--teal": "#00E5FF",
+        "--ember": "#C4620A",
+        "--wood-panel": "#4A2C1A",
+        "--gold": "#FFD700",
+        "--chrome": "#B0C4DE",
+        "--font-display": "'Righteous', 'Bangers', cursive",
+        "--font-title": "'Fredoka One', cursive",
+        "--font-body": "'Nunito', sans-serif",
+        "--font-mono": "'Share Tech Mono', monospace"
+      }
+    },
+    {
+      "id": "tv90",
+      "name": "Studio TV Années 90",
+      "description": "Néons, chrome, dorures — le vrai plateau TV des années 90",
+      "backgroundStyle": "dark",
+      "cssVars": {
+        "--sky": "#04060F",
+        "--sky2": "#080C1A",
+        "--blue": "#0055CC",
+        "--blue-light": "#2979FF",
+        "--red": "#CC0022",
+        "--red-bright": "#FF1744",
+        "--yellow": "#FFD600",
+        "--yellow-bright": "#FFE57F",
+        "--green": "#00C853",
+        "--white": "#F0F4FF",
+        "--snow": "#F0F4FF",
+        "--purple": "#9C27B0",
+        "--orange": "#FF6D00",
+        "--teal": "#00E5FF",
+        "--ember": "#FF6D00",
+        "--wood-panel": "#0A0E1F",
+        "--gold": "#FFD600",
+        "--chrome": "#C8D0E0",
+        "--neon-blue": "#2979FF",
+        "--neon-violet": "#D500F9",
+        "--font-display": "'Barlow Condensed', sans-serif",
+        "--font-title": "'Oswald', sans-serif",
+        "--font-body": "'Nunito', sans-serif",
+        "--font-mono": "'Share Tech Mono', monospace"
+      }
+    },
+    {
+      "id": "theme_1773834081709",
+      "name": "Test",
+      "description": "",
+      "backgroundStyle": "dark",
+      "cssVars": {
+        "--sky": "#2966a8",
+        "--sky2": "#ddd727",
+        "--blue": "#000000",
+        "--blue-light": "#000000",
+        "--red": "#000000",
+        "--red-bright": "#000000",
+        "--yellow": "#000000",
+        "--yellow-bright": "#000000",
+        "--green": "#000000",
+        "--purple": "#000000",
+        "--orange": "#000000",
+        "--teal": "#000000",
+        "--white": "#df17ee",
+        "--snow": "#000000",
+        "--ember": "#ff6c0a",
+        "--wood-panel": "#5a585a"
+      }
+    }
+  ],
+  "activeThemeId": "tv90"
 }

@@ -1,31 +1,41 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --sky: #160D08;
-  --sky2: #2A1810;
-  --blue: #1565C0;
-  --blue-light: #00E5FF;
-  --red: #E53935;
-  --red-bright: #FF2D78;
-  --yellow: #FFD700;
-  --yellow-bright: #FFEA00;
-  --green: #00C853;
-  --white: #F5F0E8;
-  --snow: #F5F0E8;
-  --purple: #7B1FA2;
-  --orange: #FF8C00;
-  --teal: #00E5FF;
-  --ember: #C4620A;
-  --wood-panel: #4A2C1A;
+  /* ── Palette TV90 (défaut) ──────────────────────────── */
+  --sky: #020510;
+  --sky2: #050C22;
+  --blue: #1A3EFF;
+  --blue-light: #4D9FFF;
+  --red: #E8001C;
+  --red-bright: #FF0080;
+  --yellow: #FFB800;
+  --yellow-bright: #FFD740;
+  --green: #00E87A;
+  --white: #F0F4FF;
+  --snow: #F0F4FF;
+  --purple: #8B00FF;
+  --orange: #FF7300;
+  --teal: #00D4FF;
+  --ember: #FF7300;
+  --wood-panel: #080F28;
+  --gold: #FFB800;
+  --chrome: #A0AEC0;
+  --neon-blue: #1A3EFF;
+  --neon-violet: #8B00FF;
 
-  --font-display: 'Righteous', 'Bangers', cursive;
-  --font-title: 'Fredoka One', cursive;
+  /* ── Typographie TV ─────────────────────────────────── */
+  --font-display: 'Barlow Condensed', 'Righteous', 'Bangers', sans-serif;
+  --font-ui: 'Oswald', 'Fredoka One', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
   --font-body: 'Nunito', sans-serif;
+  --font-title: 'Oswald', 'Fredoka One', sans-serif;
 
-  --shadow-retro: 4px 4px 0px rgba(0,0,0,0.8);
-  --shadow-neon-blue: 0 0 20px #00E5FF, 0 0 40px #0088AA;
-  --shadow-neon-red: 0 0 20px #FF2D78, 0 0 40px #CC0044;
-  --shadow-neon-yellow: 0 0 20px #FFD700, 0 0 40px #FF8C00;
+  /* ── Ombres néon ─────────────────────────────────────── */
+  --shadow-retro: 4px 4px 0px rgba(0,0,0,0.9);
+  --shadow-neon-blue: 0 0 12px rgba(77,159,255,0.8), 0 0 28px rgba(77,159,255,0.4);
+  --shadow-neon-red: 0 0 12px rgba(255,0,128,0.8), 0 0 28px rgba(255,0,128,0.4);
+  --shadow-neon-yellow: 0 0 12px rgba(255,184,0,0.9), 0 0 28px rgba(255,184,0,0.5);
+  --shadow-neon-gold: 0 0 16px rgba(255,184,0,0.9), 0 0 40px rgba(255,184,0,0.5), 0 0 80px rgba(255,165,0,0.2);
 }
 
 html, body, #root {
@@ -36,14 +46,23 @@ html, body, #root {
   overflow-x: hidden;
 }
 
-/* Snowflakes */
+/* ── Fond studio (background principal TV90) ─────────────────────────────── */
+.studio-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(26,62,255,0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 18% 50%, rgba(139,0,255,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 82% 50%, rgba(26,62,255,0.07) 0%, transparent 60%),
+    var(--sky, #020510);
+}
+
+/* ── Flocons (thème chalet — conservé intact) ──────────────────────────────── */
 .snow-container {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 0; overflow: hidden;
 }
 
 .snowflake {
-  position: absolute; top: -20px; color: rgba(245,240,232,0.75);
+  position: absolute; top: -20px; color: rgba(240,244,255,0.75);
   font-size: 1rem; animation: fall linear infinite;
   user-select: none;
 }
@@ -52,40 +71,66 @@ html, body, #root {
   to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
 }
 
-/* Mountain silhouette */
+/* ── Mountain silhouette (thème chalet) ─────────────────────────────────────── */
 .mountain-bg {
   position: fixed; bottom: 0; left: 0; width: 100%; pointer-events: none; z-index: 0;
 }
 
-/* Retro card — bois + néon */
-.retro-card {
-  background: repeating-linear-gradient(
-    92deg,
-    #2A1810 0px, #331d12 4px, #2A1810 8px, #3a2015 14px, #2A1810 20px
-  );
-  border: 3px solid var(--blue-light);
-  border-radius: 8px;
-  box-shadow: var(--shadow-retro), var(--shadow-neon-blue);
+/* ── Studio panel ─────────────────────────────────────────────────────────── */
+.studio-panel {
+  background: linear-gradient(135deg, rgba(8,15,40,0.97), rgba(2,5,16,0.99));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 1px rgba(77,159,255,0.2),
+    0 0 24px rgba(77,159,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.05);
   position: relative;
 }
 
-.retro-card::before {
-  content: '';
-  position: absolute; inset: -6px;
-  border: 2px dashed rgba(0,229,255,0.25);
-  border-radius: 12px;
+/* alias pour compatibilité existante */
+.retro-card {
+  background: linear-gradient(135deg, rgba(8,15,40,0.97), rgba(2,5,16,0.99));
+  border: 2px solid rgba(77,159,255,0.3);
+  border-radius: 6px;
+  box-shadow: var(--shadow-neon-blue);
+  position: relative;
+}
+
+/* ── Chrome border — effet métal TV ─────────────────────────────────────────── */
+.chrome-border {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--sky, #020510), var(--sky, #020510)) padding-box,
+    linear-gradient(135deg, #555, #ccc, #333, #ccc, #555) border-box;
+}
+
+/* ── Chrome panel ───────────────────────────────────────────────────────────── */
+.chrome-panel {
+  background: linear-gradient(180deg, #14182E 0%, #08101F 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow:
+    0 0 0 1px rgba(160,174,192,0.18),
+    0 4px 28px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  border-radius: 5px;
+}
+
+/* ── Spotlight glow ─────────────────────────────────────────────────────────── */
+.spotlight-glow {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 240px;
+  background: radial-gradient(ellipse 70% 100% at 30% 100%, rgba(26,62,255,0.1) 0%, transparent 65%),
+              radial-gradient(ellipse 70% 100% at 70% 100%, rgba(139,0,255,0.07) 0%, transparent 65%);
   pointer-events: none;
+  z-index: 0;
+  animation: studio-pulse 4s ease-in-out infinite;
 }
 
-/* Wood panel utility */
-.wood-panel {
-  background: repeating-linear-gradient(
-    92deg,
-    #4A2C1A 0px, #5a3520 4px, #4A2C1A 8px, #3e2514 14px, #4A2C1A 20px
-  );
-}
-
-/* Fireplace glow */
+/* Alias pour compatibilité */
 .fireplace-glow {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -96,6 +141,89 @@ html, body, #root {
   animation: ember-flicker 3s ease-in-out infinite;
 }
 
+/* ── Wood panel (conservé pour thème chalet) ────────────────────────────────── */
+.wood-panel {
+  background: repeating-linear-gradient(
+    92deg,
+    #4A2C1A 0px, #5a3520 4px, #4A2C1A 8px, #3e2514 14px, #4A2C1A 20px
+  );
+}
+
+/* ── Scanlines TV ───────────────────────────────────────────────────────────── */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+  animation: scanlines-move 0.5s linear infinite;
+}
+
+/* ── Glow TV ────────────────────────────────────────────────────────────────── */
+.tv-glow-gold {
+  text-shadow:
+    0 0 10px rgba(255,184,0,0.95),
+    0 0 20px rgba(255,165,0,0.7),
+    0 0 50px rgba(255,165,0,0.35);
+}
+
+.panel-glow {
+  box-shadow:
+    0 0 0 1px rgba(77,159,255,0.25),
+    0 0 24px rgba(77,159,255,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ── Boutons ────────────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.6);
+}
+.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
+.btn:hover { filter: brightness(1.15); }
+
+.btn-blue { background: var(--blue); color: var(--white); border-color: var(--blue-light); }
+.btn-red { background: var(--red); color: var(--white); border-color: var(--red-bright); }
+.btn-yellow { background: var(--yellow); color: #080F28; border-color: var(--orange); font-weight: 700; }
+.btn-green { background: var(--green); color: #080F28; border-color: #00E87A; font-weight: 700; }
+.btn-ghost { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.3); }
+.btn-ghost:hover { background: rgba(255,255,255,0.08); }
+
+/* ── Score bar ──────────────────────────────────────────────────────────────── */
+.score-bar {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+}
+
+/* ── Studio background component ───────────────────────────────────────────── */
+.studio-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS — TV GAME SHOW COMPLETE LIBRARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Héritage — conservées pour compatibilité ─── */
 @keyframes ember-flicker {
   0%, 100% { opacity: 0.9; transform: scaleX(1); }
   33%  { opacity: 1;   transform: scaleX(1.04); }
@@ -107,44 +235,208 @@ html, body, #root {
   50%       { opacity: 0.28; transform: rotate(12deg); }
 }
 
-/* Buttons */
-.btn {
-  font-family: var(--font-title);
-  font-size: 1.1rem;
-  padding: 10px 24px;
-  border: 3px solid currentColor;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
-}
-.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-
-.btn-blue { background: var(--blue); color: var(--white); border-color: var(--blue-light); }
-.btn-blue:hover { background: var(--blue-light); }
-.btn-red { background: var(--red); color: var(--white); border-color: var(--red-bright); }
-.btn-red:hover { background: var(--red-bright); }
-.btn-yellow { background: var(--yellow); color: #1a1a1a; border-color: var(--orange); }
-.btn-yellow:hover { background: var(--yellow-bright); }
-.btn-green { background: var(--green); color: #1a1a1a; border-color: #00E676; }
-.btn-ghost { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.4); }
-.btn-ghost:hover { background: rgba(255,255,255,0.1); }
-
-/* Score bar */
-.score-bar {
-  display: flex; align-items: center; gap: 12px;
-  font-family: var(--font-title);
-  font-size: 1.4rem;
+/* ── TV SLAM IN — entrée explosive depuis le bas ─── */
+@keyframes tv-slam-in {
+  0%   { opacity: 0; transform: scale(0.3) translateY(40px); }
+  60%  { opacity: 1; transform: scale(1.08) translateY(-8px); }
+  80%  { transform: scale(0.97) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
 }
 
-/* Animations */
+/* ── TV DROP IN — chute depuis le haut ─── */
+@keyframes tv-drop-in {
+  0%   { opacity: 0; transform: translateY(-60px) scaleY(0.6); }
+  65%  { opacity: 1; transform: translateY(6px) scaleY(1.04); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+/* ── TV SLIDE RIGHT — entrée depuis la gauche ─── */
+@keyframes tv-slide-right {
+  0%   { opacity: 0; transform: translateX(-80px); }
+  70%  { opacity: 1; transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── TV SLIDE LEFT — entrée depuis la droite ─── */
+@keyframes tv-slide-left {
+  0%   { opacity: 0; transform: translateX(80px); }
+  70%  { opacity: 1; transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── TV ENTER — entrée standard percutante ─── */
+@keyframes tv-enter {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── TV IMPACT — impact buzzer/bonne réponse ─── */
+@keyframes tv-impact {
+  0%   { transform: scale(1); }
+  15%  { transform: scale(1.18); filter: brightness(1.6) saturate(1.5); }
+  35%  { transform: scale(0.94); }
+  55%  { transform: scale(1.06); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
+/* ── TV PULSE GLOW — pulsation néon ─── */
+@keyframes tv-pulse-glow {
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 20px currentColor; }
+  50%       { filter: brightness(1.35); box-shadow: 0 0 55px currentColor, 0 0 110px currentColor; }
+}
+
+/* ── TV DANGER — countdown urgence ─── */
+@keyframes tv-danger {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.72; transform: scale(1.05); filter: brightness(1.4); }
+}
+
+/* ── TV SHAKE — secousse erreur ─── */
+@keyframes tv-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15%       { transform: translateX(-12px) rotate(-1.5deg); }
+  30%       { transform: translateX(10px) rotate(1deg); }
+  45%       { transform: translateX(-8px) rotate(-0.5deg); }
+  60%       { transform: translateX(6px) rotate(0.5deg); }
+  75%       { transform: translateX(-4px); }
+}
+
+/* ── TV PULSE DANGER — timer < 10s ─── */
+@keyframes tv-pulse-danger {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.65; transform: scale(1.04); color: var(--red-bright); }
+}
+
+/* ── SCORE FLIP — tableau d'affichage ─── */
+@keyframes score-flip-out {
+  0%   { transform: rotateX(0); }
+  100% { transform: rotateX(-90deg); opacity: 0.2; }
+}
+@keyframes score-flip-in {
+  0%   { transform: rotateX(90deg); opacity: 0.2; }
+  100% { transform: rotateX(0); opacity: 1; }
+}
+@keyframes score-flip {
+  0%   { transform: rotateX(0deg); }
+  45%  { transform: rotateX(-90deg); opacity: 0.2; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* ── SCANLINES MOVE ─── */
+@keyframes scanlines-move {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 8px; }
+}
+
+/* ── TELETEXT BLINK — clignotement step ─── */
+@keyframes teletext-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── RAYS ROTATE — rayons de lumière ─── */
+@keyframes rays-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── RAYS — alias ─── */
+@keyframes rays {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── LIGHT SWEEP — balayage lumineux ─── */
+@keyframes light-sweep {
+  0%   { opacity: 0; transform: rotate(-20deg); }
+  10%  { opacity: 0.15; }
+  90%  { opacity: 0.15; }
+  100% { opacity: 0; transform: rotate(20deg); }
+}
+
+/* ── CONFETTI FALL ─── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── SHINE — balayage horizontal ─── */
+@keyframes shine {
+  from { left: -100%; }
+  to   { left: 200%; }
+}
+
+/* ── STUDIO PULSE ─── */
+@keyframes studio-pulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+/* ── STAR TWINKLE / SCINTILLEMENT ─── */
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50%       { opacity: 0.2; transform: scale(0.5); }
+}
+
+/* ── SPOT SWEEP — balayage spot lumineux ─── */
+@keyframes spot-sweep {
+  0%   { transform: translateX(-30%) rotate(-15deg); opacity: 0.12; }
+  50%  { transform: translateX(30%) rotate(15deg);  opacity: 0.22; }
+  100% { transform: translateX(-30%) rotate(-15deg); opacity: 0.12; }
+}
+
+/* ── PULSE GLOW ─── */
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 15px currentColor; }
   50% { box-shadow: 0 0 40px currentColor, 0 0 80px currentColor; }
 }
 
+/* ── BLINK ─── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── BOUNCE IN ─── */
+@keyframes bounce-in {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(3deg); }
+  80% { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── SLIDE UP ─── */
+@keyframes slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── SLIDE DOWN ─── */
+@keyframes slide-down {
+  from { transform: translateY(-80px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ── SLIDE IN LEFT ─── */
+@keyframes slide-in-left {
+  from { transform: translateX(-60px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ── SLIDE IN RIGHT ─── */
+@keyframes slide-in-right {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ── ZOOM IN ─── */
+@keyframes zoom-in {
+  0%   { transform: scale(0.1) rotate(-6deg); opacity: 0; }
+  70%  { transform: scale(1.07) rotate(1.5deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ── SHAKE (alias) ─── */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-8px) rotate(-2deg); }
@@ -153,51 +445,66 @@ html, body, #root {
   80% { transform: translateX(6px) rotate(1deg); }
 }
 
-@keyframes bounce-in {
-  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-  60% { transform: scale(1.2) rotate(3deg); }
-  80% { transform: scale(0.95) rotate(-1deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-@keyframes slide-up {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
+/* ── SKI GLIDE (thème chalet) ─── */
 @keyframes ski-glide {
   from { transform: translateX(-120%); }
   to { transform: translateX(120vw); }
 }
 
-.anim-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
-.anim-slide-up { animation: slide-up 0.5s ease both; }
-.anim-blink { animation: blink 1s ease infinite; }
-
-@keyframes zoom-in {
-  0%   { transform: scale(0.1) rotate(-6deg); opacity: 0; }
-  70%  { transform: scale(1.07) rotate(1.5deg); }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
-}
-.anim-zoom-in { animation: zoom-in 0.85s cubic-bezier(0.34,1.56,0.64,1) both; }
-
-@keyframes slide-down {
-  from { transform: translateY(-80px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-.anim-slide-down { animation: slide-down 0.55s ease both; }
-
-@keyframes shine {
-  from { left: -60%; }
-  to   { left: 160%; }
+/* ── FLASH WHITE — impact écran ─── */
+@keyframes flash-white {
+  0%   { opacity: 0; }
+  8%   { opacity: 0.85; }
+  100% { opacity: 0; }
 }
 
-@keyframes rays {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* ── FLASH COLOR — impact couleur ─── */
+@keyframes flash-color {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.65; }
+  100% { opacity: 0; }
 }
+
+/* ── SEPARATOR GROW — séparateur qui s'étend ─── */
+@keyframes separator-grow {
+  from { width: 0; opacity: 0; }
+  to   { width: 100%; opacity: 1; }
+}
+
+/* ── ROUND COLOR HALO ─── */
+@keyframes halo-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  50%  { opacity: 1; }
+  100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ── GLOW PULSE FOR ANSWER REVEAL ─── */
+@keyframes answer-reveal {
+  0%   { transform: scale(0.8); opacity: 0; }
+  40%  { transform: scale(1.06); opacity: 1; }
+  70%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLASSES UTILITAIRES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Nouvelles classes TV90 */
+.anim-slam-in     { animation: tv-slam-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-drop-in     { animation: tv-drop-in 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.anim-slide-right { animation: tv-slide-right 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.anim-slide-left  { animation: tv-slide-left 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.anim-tv-enter    { animation: tv-slam-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-tv-impact   { animation: tv-impact 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-tv-shake    { animation: tv-shake 0.45s ease both; }
+.anim-score-flip  { animation: score-flip 0.4s ease both; }
+
+/* Classes héritées */
+.anim-bounce-in      { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+.anim-slide-up       { animation: slide-up 0.5s ease both; }
+.anim-slide-down     { animation: slide-down 0.55s ease both; }
+.anim-slide-in-left  { animation: slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-slide-in-right { animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-blink          { animation: blink 1s ease infinite; }
+.anim-zoom-in        { animation: zoom-in 0.85s cubic-bezier(0.34,1.56,0.64,1) both; }
