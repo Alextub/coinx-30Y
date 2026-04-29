@@ -56,6 +56,47 @@ function restoreMediaFiles() {
 restoreMediaFiles();
 
 app.use('/uploads', express.static(uploadsDir));
+
+app.get('/uploads-list', (req, res) => {
+  const dirs = [
+    { label: 'uploads', dir: uploadsDir },
+    { label: 'media-backup', dir: mediaBackupDir },
+  ];
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fichiers uploadés</title>
+  <style>body{font-family:sans-serif;padding:20px;background:#111;color:#eee}
+  h2{color:#adf}a{color:#7df;text-decoration:none}a:hover{text-decoration:underline}
+  img,video{max-width:200px;max-height:150px;display:block;margin:4px 0;border-radius:6px}
+  table{border-collapse:collapse;width:100%}td{padding:6px 12px;border-bottom:1px solid #333}
+  tr:hover td{background:#1a1a2e}</style></head><body>`;
+
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+  for (const { label, dir } of dirs) {
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).sort() : [];
+    html += `<h2>${label}/ (${files.length} fichiers)</h2>`;
+    if (files.length === 0) { html += '<p><em>vide</em></p>'; continue; }
+    html += '<table><tr><th>Fichier</th><th>Taille</th><th>Aperçu</th></tr>';
+    for (const f of files) {
+      const stat = fs.statSync(path.join(dir, f));
+      const kb = (stat.size / 1024).toFixed(1) + ' KB';
+      const url = label === 'uploads' ? `${baseUrl}/uploads/${encodeURIComponent(f)}` : null;
+      const ext = f.split('.').pop().toLowerCase();
+      const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+      const isAudio = ['mp3','wav','m4a','ogg'].includes(ext);
+      const preview = url
+        ? isImg ? `<a href="${url}" target="_blank"><img src="${url}" loading="lazy"></a>`
+        : isAudio ? `<audio controls src="${url}" style="height:28px"></audio>`
+        : `<a href="${url}" target="_blank">Télécharger</a>`
+        : '<em>backup uniquement</em>';
+      const link = url ? `<a href="${url}" target="_blank">${f}</a>` : f;
+      html += `<tr><td>${link}</td><td>${kb}</td><td>${preview}</td></tr>`;
+    }
+    html += '</table>';
+  }
+  html += '</body></html>';
+  res.send(html);
+});
+
 app.post('/upload', upload.single('image'), (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'No file' });
@@ -65,7 +106,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
 // ── CONFIG PERSISTENCE ─────────────────────────────────────────────────────────
 const CONFIG_FILE = path.join(__dirname, 'game-config.json');
-const CONFIG_KEYS = ['rounds', 'teamNames', 'teamColors', 'teamPhotos', 'gameName', 'backgroundMusicUrl', 'bgMusicVolume', 'lobbyMusicUrl', 'endMusicUrl'];
+const CONFIG_KEYS = ['rounds', 'teamNames', 'teamColors', 'teamPhotos', 'gameName', 'backgroundMusicUrl', 'bgMusicVolume', 'lobbyMusicUrl', 'endMusicUrl', 'themes', 'activeThemeId'];
 
 function saveConfig() {
   const config = {};
@@ -128,6 +169,71 @@ const io = new Server(server, {
   maxHttpBufferSize: 50 * 1024 * 1024, // 50 MB — pour les data URLs audio/image
 });
 
+// ── THEMES ────────────────────────────────────────────────────────────────────
+const CHALET_THEME = {
+  id: 'chalet',
+  name: 'Chalet Montagne',
+  description: 'Bois, neige et feu de cheminée',
+  backgroundStyle: 'chalet',
+  cssVars: {
+    '--sky': '#160D08',
+    '--sky2': '#2A1810',
+    '--blue': '#1565C0',
+    '--blue-light': '#00E5FF',
+    '--red': '#E53935',
+    '--red-bright': '#FF2D78',
+    '--yellow': '#FFD700',
+    '--yellow-bright': '#FFEA00',
+    '--green': '#00C853',
+    '--white': '#F5F0E8',
+    '--snow': '#F5F0E8',
+    '--purple': '#7B1FA2',
+    '--orange': '#FF8C00',
+    '--teal': '#00E5FF',
+    '--ember': '#C4620A',
+    '--wood-panel': '#4A2C1A',
+    '--gold': '#FFD700',
+    '--chrome': '#B0C4DE',
+    '--font-display': "'Righteous', 'Bangers', cursive",
+    '--font-title': "'Fredoka One', cursive",
+    '--font-body': "'Nunito', sans-serif",
+    '--font-mono': "'Share Tech Mono', monospace",
+  },
+};
+
+const TV90_THEME = {
+  id: 'tv90',
+  name: 'Studio TV Années 90',
+  description: 'Néons, chrome, dorures — le vrai plateau TV des années 90',
+  backgroundStyle: 'dark',
+  cssVars: {
+    '--sky': '#04060F',
+    '--sky2': '#080C1A',
+    '--blue': '#0055CC',
+    '--blue-light': '#2979FF',
+    '--red': '#CC0022',
+    '--red-bright': '#FF1744',
+    '--yellow': '#FFD600',
+    '--yellow-bright': '#FFE57F',
+    '--green': '#00C853',
+    '--white': '#F0F4FF',
+    '--snow': '#F0F4FF',
+    '--purple': '#9C27B0',
+    '--orange': '#FF6D00',
+    '--teal': '#00E5FF',
+    '--ember': '#FF6D00',
+    '--wood-panel': '#0A0E1F',
+    '--gold': '#FFD600',
+    '--chrome': '#C8D0E0',
+    '--neon-blue': '#2979FF',
+    '--neon-violet': '#D500F9',
+    '--font-display': "'Barlow Condensed', sans-serif",
+    '--font-title': "'Oswald', sans-serif",
+    '--font-body': "'Nunito', sans-serif",
+    '--font-mono': "'Share Tech Mono', monospace",
+  },
+};
+
 // ── GAME STATE ────────────────────────────────────────────────────────────────
 let gameState = {
   screen: 'waiting',    // waiting | lobby | question | scores | timer_round | blind_test | face_puzzle | wager | mime | creative | end
@@ -183,6 +289,8 @@ let gameState = {
   gameName: 'CHALET QUIZ',
   endMusicUrl: '',
   videoRound: { phase: 'watching', playing: false },
+  themes: [CHALET_THEME, TV90_THEME],
+  activeThemeId: 'chalet',
 };
 
 // Load persisted config immediately after gameState definition
@@ -501,6 +609,31 @@ io.on('connection', (socket) => {
     gameState.gameName = name || 'CHALET QUIZ';
     saveConfig();
     io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_save_theme', (theme) => {
+    if (!theme?.id) return;
+    const idx = gameState.themes.findIndex(t => t.id === theme.id);
+    if (idx >= 0) gameState.themes[idx] = theme;
+    else gameState.themes.push(theme);
+    saveConfig();
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_delete_theme', ({ themeId }) => {
+    if (themeId === 'chalet') return; // thème de base protégé
+    gameState.themes = gameState.themes.filter(t => t.id !== themeId);
+    if (gameState.activeThemeId === themeId) gameState.activeThemeId = 'chalet';
+    saveConfig();
+    io.emit('game_state', gameState);
+  });
+
+  socket.on('admin_set_active_theme', ({ themeId }) => {
+    if (gameState.themes.find(t => t.id === themeId)) {
+      gameState.activeThemeId = themeId;
+      saveConfig();
+      io.emit('game_state', gameState);
+    }
   });
 
   // Face puzzle
