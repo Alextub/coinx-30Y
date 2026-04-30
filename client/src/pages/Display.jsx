@@ -1432,6 +1432,48 @@ function WagerScreen({ gs }) {
           )}
         </>
       )}
+
+      {phase === 'awarded' && (() => {
+        const awardedTeam = gs.wager?.awardedTeam;
+        const isSteal = awardedTeam !== assignedTeam;
+        const awardedColor = awardedTeam === 'team1' ? 'var(--red-bright)' : 'var(--blue-light)';
+        return (
+          <>
+            <div className="anim-slam-in" style={{
+              fontFamily:'var(--font-display)', fontStyle:'italic', fontWeight:900,
+              fontSize:'clamp(1.8rem,4vw,3.2rem)',
+              letterSpacing:'0.08em', textTransform:'uppercase',
+              color: isSteal ? 'var(--red-bright)' : 'var(--green)',
+              textShadow: isSteal
+                ? '0 0 20px rgba(255,0,128,0.9), 0 0 50px rgba(255,0,128,0.4)'
+                : '0 0 20px rgba(0,232,122,0.9), 0 0 50px rgba(0,232,122,0.4)',
+              animation:'tv-pulse-glow 0.9s ease infinite',
+            }}>
+              {isSteal ? 'VOL RÉUSSI !' : 'BONNE RÉPONSE !'}
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
+              <div style={{
+                fontFamily:'var(--font-title)', fontWeight:700,
+                fontSize:'clamp(1.2rem,2.5vw,1.8rem)',
+                letterSpacing:'0.12em', textTransform:'uppercase',
+                color: awardedColor,
+                textShadow:`0 0 20px ${awardedColor}CC`,
+              }}>
+                <div style={{ width:'12px', height:'12px', borderRadius:'50%', background:awardedColor, display:'inline-block', marginRight:'10px', boxShadow:`0 0 14px ${awardedColor}` }}/>
+                {gs.teamNames?.[awardedTeam]}
+              </div>
+              <div style={{
+                fontFamily:'var(--font-display)', fontStyle:'italic', fontWeight:900,
+                fontSize:'clamp(2rem,4vw,3.2rem)',
+                color:'var(--gold, #FFB800)',
+                textShadow:'0 0 24px rgba(255,184,0,0.95)',
+              }}>
+                +{bet} <span style={{ fontSize:'0.5em', opacity:0.7, fontStyle:'normal', fontFamily:'var(--font-mono)' }}>PTS</span>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

@@ -667,6 +667,8 @@ io.on('connection', (socket) => {
   socket.on('admin_wager_award', ({ team }) => {
     const pts = gameState.wager?.bet || 0;
     gameState.roundScores[team] = (gameState.roundScores[team] || 0) + pts;
+    gameState.wager.phase = 'awarded';
+    gameState.wager.awardedTeam = team;
     io.emit('game_state', gameState);
   });
 

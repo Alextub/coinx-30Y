@@ -777,6 +777,17 @@ function ControlPanel({ gs, emit }) {
                 </div>
               </div>
             )}
+
+            {phase === 'awarded' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ fontSize:'0.85rem', padding:'8px 12px', background:'rgba(27,94,32,0.2)', border:'1px solid rgba(27,94,32,0.5)', borderRadius:'6px', color:'var(--green)' }}>
+                  ✅ Points attribués à {gs.wager?.awardedTeam === 'team1' ? '🔴' : '🔵'} {gs.teamNames?.[gs.wager?.awardedTeam]} — {bet} pts
+                </div>
+                <Btn onClick={() => emit('admin_next_question')} color="#1565c0" disabled={!hasMoreQ}>
+                  ➡️ Question suivante
+                </Btn>
+              </div>
+            )}
           </Section>
         );
       })()}
